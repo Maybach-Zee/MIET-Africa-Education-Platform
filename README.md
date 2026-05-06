@@ -50,26 +50,26 @@ Every feature is designed to directly benefit vulnerable South African children:
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| Mobile Frontend | React Native | Cross-platform Android/iOS app |
+| Mobile Frontend | SwiftUI (iOS native) | Native iOS application (iOS 26+) |
 | Web Frontend | React.js | Admin dashboard and public pages |
 | Backend API | Node.js with Express | RESTful API services |
 | Database | PostgreSQL | User, school, and student data |
 | File Storage | AWS S3 / Cloudinary | Educational resources (PDFs, videos) |
 | Authentication | JWT | Secure user sessions |
-| Offline Storage | SQLite | Local device data |
+| Offline Storage | Core Data (iOS) | Local device storage with automatic sync |
 | Push Notifications | Firebase Cloud Messaging | Mobile alerts |
 | Cloud Hosting | AWS / Vercel | Scalable infrastructure |
 | Version Control | GitHub | Code repository and collaboration |
 
 ## 📊 Non-Functional Requirements
 
-- **Performance**: Mobile app loads in <3 seconds on standard Android devices
+- **Performance**: Mobile app loads in <3 seconds on a standard iOS device
 - **Offline Capability**: Core features function without internet
 - **Security**: AES-256 encryption at rest; HTTPS/TLS in transit
 - **Scalability**: Supports 10,000+ concurrent users
 - **Usability**: Intuitive for users with limited smartphone experience
 - **Accessibility**: WCAG 2.1 AA compliant; adjustable font sizes
-- **Compatibility**: Android 8.0+; Chrome, Firefox, Safari
+- **Compatibility**: iOS 26+; Chrome, Firefox, Safari
 - **Availability**: 99.5% uptime with automated failover
 - **Data Privacy**: Compliant with South Africa's POPIA
 - **Maintainability**: 70%+ unit test coverage; documented standards
@@ -79,7 +79,7 @@ Every feature is designed to directly benefit vulnerable South African children:
 ### Prerequisites
 - Node.js (v16+)
 - PostgreSQL (v12+)
-- React Native development environment
+- Xcode 26+ (for iOS development)
 - Git
 
 ### Installation
