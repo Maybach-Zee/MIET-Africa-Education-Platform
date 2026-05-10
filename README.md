@@ -6,6 +6,10 @@
 
 A comprehensive digital solution for MIET Africa, a South African NGO dedicated to improving educational outcomes for children and youth in vulnerable communities. This platform connects teachers, students, administrators, and donors through two integrated applications.
 
+## 🎬 Demo
+
+[![Watch the iOS demo](./docs/media/ios-demo-thumbnail.png)](./docs/media/ios-demo.mov)
+
 ## 📋 Overview
 
 MIET Africa works with hundreds of under-resourced schools across South Africa, but faces significant operational challenges: rural teacher isolation, paper-based tracking, communication breakdowns, and limited donor visibility. This platform addresses these gaps with:
