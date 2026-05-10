@@ -2,3 +2,27 @@
 TODO.md
 README_MIET_AFRICA.md
 DATABASE_DOCUMENTATION.md
+
+.DS_Store
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# CocoaPods, only if pods are not committed
+Pods/
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# Fastlane reports/screenshots, depending on team preference
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
