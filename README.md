@@ -8,7 +8,7 @@ A comprehensive digital solution for MIET Africa, a South African NGO dedicated 
 
 ## 🎬 Demo
 
-<video src="./docs/media/ios-demo.mov" width="320" controls></video>
+[Watch the iOS demo video](./docs/media/ios-demo.mov)
 
 ## 📋 Overview
 
