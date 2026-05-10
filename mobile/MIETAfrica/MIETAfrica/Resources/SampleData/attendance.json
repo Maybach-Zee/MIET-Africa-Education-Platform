@@ -1,0 +1,20 @@
+[
+  { "id": "att-001", "learner_id": "learner-001", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-002", "learner_id": "learner-002", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-003", "learner_id": "learner-003", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-004", "learner_id": "learner-004", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-005", "learner_id": "learner-005", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-006", "learner_id": "learner-006", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-007", "learner_id": "learner-007", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-008", "learner_id": "learner-008", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-009", "learner_id": "learner-009", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-010", "learner_id": "learner-010", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-011", "learner_id": "learner-011", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": false },
+  { "id": "att-012", "learner_id": "learner-012", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-013", "learner_id": "learner-013", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-014", "learner_id": "learner-014", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-015", "learner_id": "learner-015", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  },
+  { "id": "att-016", "learner_id": "learner-016", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": false },
+  { "id": "att-017", "learner_id": "learner-017", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": false },
+  { "id": "att-018", "learner_id": "learner-018", "course_id": "course-001", "date": "2026-05-06T08:00:00Z", "is_present": true  }
+]

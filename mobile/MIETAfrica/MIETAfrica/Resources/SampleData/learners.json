@@ -1,0 +1,20 @@
+[
+  { "id": "learner-001", "first_name": "Sipho",     "last_name": "Khumalo",         "email": "sipho.khumalo@example.co.za",     "enrolled_course_ids": ["course-001", "course-003"] },
+  { "id": "learner-002", "first_name": "Nomvula",   "last_name": "Mthembu",         "email": "nomvula.mthembu@example.co.za",   "enrolled_course_ids": ["course-001"] },
+  { "id": "learner-003", "first_name": "Bongani",   "last_name": "Zulu",            "email": "bongani.zulu@example.co.za",      "enrolled_course_ids": ["course-001", "course-002"] },
+  { "id": "learner-004", "first_name": "Lerato",    "last_name": "Modise",          "email": "lerato.modise@example.co.za",     "enrolled_course_ids": ["course-002"] },
+  { "id": "learner-005", "first_name": "Thabo",     "last_name": "Mokoena",         "email": "thabo.mokoena@example.co.za",     "enrolled_course_ids": ["course-001", "course-003"] },
+  { "id": "learner-006", "first_name": "Ayanda",    "last_name": "Ngcobo",          "email": "ayanda.ngcobo@example.co.za",     "enrolled_course_ids": ["course-002", "course-003"] },
+  { "id": "learner-007", "first_name": "Sibusiso",  "last_name": "Mabaso",          "email": "sibusiso.mabaso@example.co.za",   "enrolled_course_ids": ["course-001"] },
+  { "id": "learner-008", "first_name": "Zanele",    "last_name": "Buthelezi",       "email": "zanele.buthelezi@example.co.za",  "enrolled_course_ids": ["course-001", "course-002", "course-003"] },
+  { "id": "learner-009", "first_name": "Mandla",    "last_name": "Nkosi",           "email": "mandla.nkosi@example.co.za",      "enrolled_course_ids": ["course-002"] },
+  { "id": "learner-010", "first_name": "Naledi",    "last_name": "Tshabalala",      "email": "naledi.tshabalala@example.co.za", "enrolled_course_ids": ["course-001"] },
+  { "id": "learner-011", "first_name": "Lindiwe",   "last_name": "Cele",            "email": "lindiwe.cele@example.co.za",      "enrolled_course_ids": ["course-001", "course-003"] },
+  { "id": "learner-012", "first_name": "Khanyi",    "last_name": "Mahlangu",        "email": "khanyi.mahlangu@example.co.za",   "enrolled_course_ids": ["course-002"] },
+  { "id": "learner-013", "first_name": "Mpho",      "last_name": "Sithole",         "email": "mpho.sithole@example.co.za",      "enrolled_course_ids": ["course-001", "course-002"] },
+  { "id": "learner-014", "first_name": "Refilwe",   "last_name": "Molefe",          "email": "refilwe.molefe@example.co.za",    "enrolled_course_ids": ["course-003"] },
+  { "id": "learner-015", "first_name": "Tshepo",    "last_name": "Radebe",          "email": "tshepo.radebe@example.co.za",     "enrolled_course_ids": ["course-001", "course-003"] },
+  { "id": "learner-016", "first_name": "Fatima",    "last_name": "Adams",           "email": "fatima.adams@example.co.za",      "enrolled_course_ids": ["course-002"] },
+  { "id": "learner-017", "first_name": "Pieter",    "last_name": "van der Merwe",   "email": "pieter.vandermerwe@example.co.za","enrolled_course_ids": ["course-001"] },
+  { "id": "learner-018", "first_name": "Charlene",  "last_name": "Williams",        "email": "charlene.williams@example.co.za", "enrolled_course_ids": ["course-002", "course-003"] }
+]
