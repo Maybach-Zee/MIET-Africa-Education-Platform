@@ -1,44 +1,22 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const authRoutes = require('./routes/authRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
-const resourceRoutes = require('./routes/resourceRoutes');
-const centreRoutes = require('./routes/centreRoutes');
-const reportRoutes = require('./routes/reportRoutes');
-const eventRoutes = require('./routes/eventRoutes');
-const donationRoutes = require('./routes/donationRoutes');
-const userRoutes = require('./routes/userRoutes');
-const enrolmentRoutes = require('./routes/enrolmentRoutes');
-const assessmentRoutes = require('./routes/assessmentRoutes');
-const certificateRoutes = require('./routes/certificateRoutes');
-const feeRoutes = require('./routes/feeRoutes');
+const routes = [
+  { name: 'auth', mod: require('./routes/authRoutes') },
+  { name: 'dashboard', mod: require('./routes/dashboardRoutes') },
+  { name: 'resources', mod: require('./routes/resourceRoutes') },
+  { name: 'centres', mod: require('./routes/centreRoutes') },
+  { name: 'reports', mod: require('./routes/reportRoutes') },
+  { name: 'events', mod: require('./routes/eventRoutes') },
+  { name: 'donations', mod: require('./routes/donationRoutes') },
+  { name: 'users', mod: require('./routes/userRoutes') },
+  { name: 'enrolments', mod: require('./routes/enrolmentRoutes') },
+  { name: 'assessments', mod: require('./routes/assessmentRoutes') },
+  { name: 'certificates', mod: require('./routes/certificateRoutes') },
+  { name: 'fees', mod: require('./routes/feeRoutes') }
+];
 
-const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/resources', resourceRoutes);
-app.use('/api/centres', centreRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/events', eventRoutes);
-app.use('/api/donations', donationRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/enrolments', enrolmentRoutes);
-app.use('/api/assessments', assessmentRoutes);
-app.use('/api/certificates', certificateRoutes);
-app.use('/api/fees', feeRoutes);
-
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Internal server error' });
+routes.forEach(r => {
+  if (typeof r.mod !== 'function') {
+    console.error(`❌ Route "${r.name}" is not a function. Type: ${typeof r.mod}`);
+  } else {
+    console.log(`✅ ${r.name}`);
+  }
 });
-
-module.exports = app;
