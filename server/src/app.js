@@ -1,22 +1,41 @@
-const routes = [
-  { name: 'auth', mod: require('./routes/authRoutes') },
-  { name: 'dashboard', mod: require('./routes/dashboardRoutes') },
-  { name: 'resources', mod: require('./routes/resourceRoutes') },
-  { name: 'centres', mod: require('./routes/centreRoutes') },
-  { name: 'reports', mod: require('./routes/reportRoutes') },
-  { name: 'events', mod: require('./routes/eventRoutes') },
-  { name: 'donations', mod: require('./routes/donationRoutes') },
-  { name: 'users', mod: require('./routes/userRoutes') },
-  { name: 'enrolments', mod: require('./routes/enrolmentRoutes') },
-  { name: 'assessments', mod: require('./routes/assessmentRoutes') },
-  { name: 'certificates', mod: require('./routes/certificateRoutes') },
-  { name: 'fees', mod: require('./routes/feeRoutes') }
+const express = require('express');
+const cors = require('cors');
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Import all routes (we'll check them as we mount)
+const routeDefinitions = [
+  { path: '/api/auth',        route: require('./routes/authRoutes') },
+  { path: '/api/dashboard',   route: require('./routes/dashboardRoutes') },
+  { path: '/api/resources',   route: require('./routes/resourceRoutes') },
+  { path: '/api/centres',     route: require('./routes/centreRoutes') },
+  { path: '/api/reports',     route: require('./routes/reportRoutes') },
+  { path: '/api/events',      route: require('./routes/eventRoutes') },
+  { path: '/api/donations',   route: require('./routes/donationRoutes') },
+  { path: '/api/users',       route: require('./routes/userRoutes') },
+  { path: '/api/enrolments',  route: require('./routes/enrolmentRoutes') },
+  { path: '/api/assessments', route: require('./routes/assessmentRoutes') },
+  { path: '/api/certificates',route: require('./routes/certificateRoutes') },
+  { path: '/api/fees',        route: require('./routes/feeRoutes') },
 ];
 
-routes.forEach(r => {
-  if (typeof r.mod !== 'function') {
-    console.error(`❌ Route "${r.name}" is not a function. Type: ${typeof r.mod}`);
+// Mount routes and validate they are Express routers
+routeDefinitions.forEach(({ path, route }) => {
+  if (typeof route === 'function') {
+    app.use(path, route);
+    console.log(`✅ Mounted ${path}`);
   } else {
-    console.log(`✅ ${r.name}`);
+    console.error(`❌ Failed to mount ${path} – not a function (type: ${typeof route})`);
   }
 });
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Internal server error' });
+});
+
+module.exports = app;
