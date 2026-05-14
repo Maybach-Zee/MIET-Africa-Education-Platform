@@ -16,6 +16,8 @@ import SessionAttendance from './pages/facilitator/SessionAttendance';
 import Assessments from './pages/facilitator/Assessments';
 import DonorPortal from './pages/donor/DonorPortal';
 import Unauthorized from './pages/Unauthorized';
+import PublicImpact from './pages/donor/PublicImpact';
+import PrincipalDashboard from './pages/principal/PrincipalDashboard';
 
 function App() {
   return (
@@ -48,8 +50,17 @@ function App() {
             <Route element={<Layout />}>
               <Route path="/donor" element={<DonorPortal />} />
               <Route path="/donor/donations" element={<Donations />} />
+              <Route path="/impact" element={<PublicImpact />} />
             </Route>
           </Route>
+
+          {/* Principal / Manager */}
+          <Route element={<ProtectedRoute allowedRoles={['MANAGER']} />}>
+            <Route element={<Layout />}>
+              <Route path="/principal" element={<PrincipalDashboard />} />
+            </Route>
+          </Route>
+          
           <Route path="/unauthorized" element={<Unauthorized />} />
         </Routes>
       </BrowserRouter>
