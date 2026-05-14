@@ -9,15 +9,13 @@ const ManageResources = () => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchResources = async () => {
-    const { data } = await api.get('/resources/admin');
-    setResources(data);
-  };
+  const fetch = () => api.get('/resources/admin').then(res => setResources(res.data));
 
-  useEffect(() => { fetchResources(); }, []);
+  useEffect(() => { fetch(); }, []);
 
   const handleUpload = async (e) => {
     e.preventDefault();
+    if (!file) return toast.error('Select a file');
     const formData = new FormData();
     formData.append('title', title);
     formData.append('type', type);
@@ -26,8 +24,9 @@ const ManageResources = () => {
       setLoading(true);
       await api.post('/resources', formData);
       toast.success('Resource uploaded');
-      fetchResources();
-      setTitle(''); setFile(null);
+      fetch();
+      setTitle('');
+      setFile(null);
     } catch (err) {
       toast.error('Upload failed');
     } finally {
@@ -38,14 +37,14 @@ const ManageResources = () => {
   const handleApprove = async (id) => {
     await api.put(`/resources/${id}/approve`);
     toast.success('Approved');
-    fetchResources();
+    fetch();
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Delete this resource?')) {
       await api.delete(`/resources/${id}`);
       toast.success('Deleted');
-      fetchResources();
+      fetch();
     }
   };
 

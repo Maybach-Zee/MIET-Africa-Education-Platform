@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../../services/api';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const Dashboard = () => {
   const [summary, setSummary] = useState(null);
@@ -11,7 +11,7 @@ const Dashboard = () => {
     api.get('/dashboard/province-stats').then(res => setProvinceStats(res.data));
   }, []);
 
-  if (!summary) return <div>Loading...</div>;
+  if (!summary) return <div className="text-center py-10">Loading dashboard...</div>;
 
   return (
     <div>
@@ -20,7 +20,7 @@ const Dashboard = () => {
         {Object.entries(summary).map(([key, val]) => (
           <div key={key} className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
-              <dt className="text-sm font-medium text-gray-500 truncate">{key.replace(/_/g, ' ')}</dt>
+              <dt className="text-sm font-medium text-gray-500 truncate capitalize">{key.replace(/_/g, ' ')}</dt>
               <dd className="mt-1 text-3xl font-semibold text-gray-900">{val}</dd>
             </div>
           </div>
@@ -35,7 +35,6 @@ const Dashboard = () => {
             <XAxis dataKey="province_name" />
             <YAxis />
             <Tooltip />
-            <Legend />
             <Bar dataKey="active_learners" fill="#8884d8" name="Active Learners" />
             <Bar dataKey="certificates_issued" fill="#82ca9d" name="Certificates Issued" />
           </BarChart>
