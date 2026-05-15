@@ -1,0 +1,89 @@
+{
+    "provinces": [
+      {
+        "name": "Eastern Cape",
+        "cities": [
+          {"name": "Gqeberha (Port Elizabeth)", "lat": -33.9608, "lng": 25.6022},
+          {"name": "East London", "lat": -33.0153, "lng": 27.9116},
+          {"name": "Mthatha", "lat": -31.5886, "lng": 28.7844},
+          {"name": "Queenstown", "lat": -31.8976, "lng": 26.8753},
+          {"name": "Grahamstown", "lat": -33.3105, "lng": 26.5258}
+        ]
+      },
+      {
+        "name": "Free State",
+        "cities": [
+          {"name": "Bloemfontein", "lat": -29.0852, "lng": 26.1596},
+          {"name": "Welkom", "lat": -27.9864, "lng": 26.7066},
+          {"name": "Bethlehem", "lat": -28.2308, "lng": 28.3071},
+          {"name": "Kroonstad", "lat": -27.6500, "lng": 27.2333}
+        ]
+      },
+      {
+        "name": "Gauteng",
+        "cities": [
+          {"name": "Johannesburg", "lat": -26.2041, "lng": 28.0473},
+          {"name": "Pretoria", "lat": -25.7479, "lng": 28.2293},
+          {"name": "Soweto", "lat": -26.2671, "lng": 27.8586},
+          {"name": "Vereeniging", "lat": -26.6731, "lng": 27.9265},
+          {"name": "Krugersdorp", "lat": -26.0889, "lng": 27.7756}
+        ]
+      },
+      {
+        "name": "KwaZulu-Natal",
+        "cities": [
+          {"name": "Durban", "lat": -29.8587, "lng": 31.0218},
+          {"name": "Pietermaritzburg", "lat": -29.6006, "lng": 30.3794},
+          {"name": "Richards Bay", "lat": -28.7833, "lng": 32.0667},
+          {"name": "Newcastle", "lat": -27.7570, "lng": 29.9318},
+          {"name": "Ladysmith", "lat": -28.5594, "lng": 29.7808}
+        ]
+      },
+      {
+        "name": "Limpopo",
+        "cities": [
+          {"name": "Polokwane", "lat": -23.9085, "lng": 29.4681},
+          {"name": "Mokopane", "lat": -24.1834, "lng": 29.0111},
+          {"name": "Thohoyandou", "lat": -22.9456, "lng": 30.4850},
+          {"name": "Musina", "lat": -22.3464, "lng": 30.0500}
+        ]
+      },
+      {
+        "name": "Mpumalanga",
+        "cities": [
+          {"name": "Mbombela (Nelspruit)", "lat": -25.4745, "lng": 30.9704},
+          {"name": "Witbank (eMalahleni)", "lat": -25.8728, "lng": 29.2333},
+          {"name": "Secunda", "lat": -26.4950, "lng": 29.1914},
+          {"name": "Ermelo", "lat": -26.5167, "lng": 29.9833}
+        ]
+      },
+      {
+        "name": "North West",
+        "cities": [
+          {"name": "Mahikeng", "lat": -25.8652, "lng": 25.6442},
+          {"name": "Potchefstroom", "lat": -26.7167, "lng": 27.1000},
+          {"name": "Klerksdorp", "lat": -26.8667, "lng": 26.6667},
+          {"name": "Rustenburg", "lat": -25.6667, "lng": 27.2333}
+        ]
+      },
+      {
+        "name": "Northern Cape",
+        "cities": [
+          {"name": "Kimberley", "lat": -28.7282, "lng": 24.7499},
+          {"name": "Upington", "lat": -28.4500, "lng": 21.2500},
+          {"name": "Springbok", "lat": -29.6667, "lng": 17.8833},
+          {"name": "De Aar", "lat": -30.6500, "lng": 24.0167}
+        ]
+      },
+      {
+        "name": "Western Cape",
+        "cities": [
+          {"name": "Cape Town", "lat": -33.9249, "lng": 18.4241},
+          {"name": "Stellenbosch", "lat": -33.9346, "lng": 18.8601},
+          {"name": "George", "lat": -33.9630, "lng": 22.4617},
+          {"name": "Worcester", "lat": -33.6467, "lng": 19.4484},
+          {"name": "Paarl", "lat": -33.7333, "lng": 18.9667}
+        ]
+      }
+    ]
+  }

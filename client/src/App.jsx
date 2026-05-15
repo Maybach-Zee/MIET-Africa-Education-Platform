@@ -18,6 +18,7 @@ import DonorPortal from './pages/donor/DonorPortal';
 import Unauthorized from './pages/Unauthorized';
 import PublicImpact from './pages/donor/PublicImpact';
 import PrincipalDashboard from './pages/principal/PrincipalDashboard';
+import RegisterSchool from './pages/principal/RegisterSchool';
 
 function App() {
   return (
@@ -58,6 +59,7 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={['MANAGER']} />}>
             <Route element={<Layout />}>
               <Route path="/principal" element={<PrincipalDashboard />} />
+              <Route path="/my-school" element={<RegisterSchool />} />
             </Route>
           </Route>
           
