@@ -7,30 +7,29 @@ import {
 
 const navigation = {
   ADMIN: [
-    { name: 'Dashboard', href: '/', icon: HomeIcon },
-    { name: 'Resources', href: '/resources', icon: FolderIcon },
-    { name: 'Schools', href: '/schools', icon: AcademicCapIcon },
-    { name: 'Reports', href: '/reports', icon: ChartBarIcon },
-    { name: 'Events', href: '/events', icon: CalendarIcon },
-    { name: 'Donations', href: '/donations', icon: CurrencyDollarIcon },
-    { name: 'Users', href: '/users', icon: UsersIcon },
+    { name: 'Dashboard', href: '/admin', icon: HomeIcon },
+    { name: 'Resources', href: '/admin/resources', icon: FolderIcon },
+    { name: 'Schools', href: '/admin/schools', icon: AcademicCapIcon },
+    { name: 'Reports', href: '/admin/reports', icon: ChartBarIcon },
+    { name: 'Events', href: '/admin/events', icon: CalendarIcon },
+    { name: 'Donations', href: '/admin/donations', icon: CurrencyDollarIcon },
+    { name: 'Users', href: '/admin/users', icon: UsersIcon },
   ],
   MANAGER: [
-    { name: 'Dashboard', href: '/', icon: HomeIcon },
-    { name: 'Resources', href: '/resources', icon: FolderIcon },
-    { name: 'Schools', href: '/schools', icon: AcademicCapIcon },
-    { name: 'Reports', href: '/reports', icon: ChartBarIcon },
-    { name: 'Events', href: '/events', icon: CalendarIcon },
-    { name: 'Donations', href: '/donations', icon: CurrencyDollarIcon },
+    { name: 'Dashboard', href: '/manager', icon: HomeIcon },
+    { name: 'Events', href: '/manager/events', icon: CalendarIcon },
+    { name: 'Reports', href: '/manager/reports', icon: ChartBarIcon },
+    { name: 'My School', href: '/manager/my-school', icon: AcademicCapIcon },
   ],
   FACILITATOR: [
-    { name: 'My Courses', href: '/my-courses', icon: AcademicCapIcon },
-    { name: 'Sessions', href: '/sessions', icon: CalendarIcon },
-    { name: 'Assessments', href: '/assessments', icon: DocumentTextIcon },
+    { name: 'Dashboard', href: '/facilitator', icon: HomeIcon },
+    { name: 'Sessions', href: '/facilitator/sessions', icon: CalendarIcon },
+    { name: 'Assessments', href: '/facilitator/assessments', icon: DocumentTextIcon },
   ],
   DONOR: [
     { name: 'Impact Dashboard', href: '/donor', icon: ChartBarIcon },
     { name: 'Donations', href: '/donor/donations', icon: CurrencyDollarIcon },
+    { name: 'Public Impact', href: '/donor/impact', icon: HomeIcon },
   ],
 };
 

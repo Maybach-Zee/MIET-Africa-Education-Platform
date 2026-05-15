@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('refreshToken', refreshToken);
     setUser(userData);
     toast.success('Welcome back!');
+    return userData;
   };
 
   const logout = () => {

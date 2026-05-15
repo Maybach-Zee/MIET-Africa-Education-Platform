@@ -81,6 +81,60 @@ exports.login = async (req, res) => {
   }
 };
 
+// Manager + School Registration
+exports.register = async (req, res) => {
+  const { full_name, email, password, centre_name, province_id, city, gps_latitude, gps_longitude, enrolled_learners } = req.body;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Create the user (MANAGER role)
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userResult = await client.query(
+      `INSERT INTO users (full_name, email, password_hash, role, must_change_password)
+       VALUES ($1,$2,$3,'MANAGER', false)
+       RETURNING user_id`,
+      [full_name, email, hashedPassword]
+    );
+    const userId = userResult.rows[0].user_id;
+
+    // 2. Create the centre (school) – code auto-generated
+    const centreCode = 'CTR-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    const centreResult = await client.query(
+      `INSERT INTO centres (centre_code, centre_name, province_id, city, gps_latitude, gps_longitude, enrolled_learners, centre_manager_id, registration_status, is_active)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'PENDING', false)
+       RETURNING centre_id`,
+      [centreCode, centre_name, province_id, city, gps_latitude, gps_longitude, enrolled_learners || 0, userId]
+    );
+    const centreId = centreResult.rows[0].centre_id;
+
+    // 3. Link the user to the centre
+    await client.query('UPDATE users SET centre_id = $1 WHERE user_id = $2', [centreId, userId]);
+
+    await client.query('COMMIT');
+
+    // Log
+    await logAction({
+      userId, userEmail: email, action: 'CREATE', entityType: 'users',
+      entityId: userId, description: `Manager registered with school ${centre_name}`, actionResult: 'SUCCESS'
+    });
+
+    res.status(201).json({
+      message: 'Registration submitted. Your school is pending approval.',
+      user: { id: userId, full_name, email, role: 'MANAGER' },
+      centre: { id: centreId, name: centre_name, status: 'PENDING' }
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    if (err.constraint === 'users_email_key') {
+      return res.status(409).json({ message: 'Email already exists' });
+    }
+    res.status(500).json({ message: err.message });
+  } finally {
+    client.release();
+  }
+};
+
 exports.refreshToken = async (req, res) => {
   const { refreshToken } = req.body;
   if (!refreshToken) return res.status(400).json({ message: 'Refresh token required' });

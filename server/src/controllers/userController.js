@@ -5,10 +5,16 @@ const { logAction } = require('../utils/auditLogger');
 exports.getAll = async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT user_id, full_name, email, role, is_active, phone_number, last_login, created_at FROM users ORDER BY full_name'
+      `SELECT u.user_id, u.full_name, u.email, u.role, u.is_active, u.phone_number, u.last_login, u.created_at,
+              c.centre_name
+       FROM users u
+       LEFT JOIN centres c ON u.centre_id = c.centre_id
+       ORDER BY u.full_name`
     );
     res.json(rows);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 exports.create = async (req, res) => {
@@ -25,6 +31,72 @@ exports.create = async (req, res) => {
     res.status(201).json(user);
   } catch (err) {
     if (err.constraint === 'users_email_key') return res.status(409).json({ message: 'Email already exists' });
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Add a facilitator under the manager's centre
+exports.addFacilitator = async (req, res) => {
+  // Only MANAGER can call this, and we'll get their centre_id from the user record
+  const { full_name, email, password } = req.body;
+  try {
+    // Get the manager's centre_id
+    const managerResult = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
+    if (managerResult.rows.length === 0 || !managerResult.rows[0].centre_id) {
+      return res.status(400).json({ message: 'You are not linked to a school' });
+    }
+    const centreId = managerResult.rows[0].centre_id;
+
+    const hash = await bcrypt.hash(password, 10);
+    const { rows: [user] } = await pool.query(
+      `INSERT INTO users (full_name, email, password_hash, role, centre_id, must_change_password)
+       VALUES ($1,$2,$3,'FACILITATOR',$4, false)
+       RETURNING user_id, full_name, email, role`,
+      [full_name, email, hash, centreId]
+    );
+
+    await logAction({
+      userId: req.user.id, userEmail: req.user.email, action: 'CREATE',
+      entityType: 'users', entityId: user.user_id, description: 'Facilitator added', actionResult: 'SUCCESS'
+    });
+    res.status(201).json(user);
+  } catch (err) {
+    if (err.constraint === 'users_email_key') return res.status(409).json({ message: 'Email already exists' });
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// List teachers in the manager's school
+exports.getTeachers = async (req, res) => {
+  try {
+    const manager = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
+    if (!manager.rows[0]?.centre_id) return res.json([]);
+    const centreId = manager.rows[0].centre_id;
+
+    const { rows } = await pool.query(
+      `SELECT user_id, full_name, email, is_active, last_login,
+              false AS training_completed   -- placeholder
+       FROM users
+       WHERE role = 'FACILITATOR' AND centre_id = $1
+       ORDER BY full_name`,
+      [centreId]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// userController.js
+exports.getUnassignedManagers = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT user_id, full_name, email FROM users
+       WHERE role = 'MANAGER' AND (centre_id IS NULL OR centre_id NOT IN (SELECT centre_id FROM centres WHERE centre_manager_id = user_id))
+       ORDER BY full_name`
+    );
+    res.json(rows);
+  } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };

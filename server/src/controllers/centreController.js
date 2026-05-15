@@ -364,3 +364,18 @@ exports.getMyCentre = async (
     });
   }
 };
+
+// centreController.js - add
+exports.assignManager = async (req, res) => {
+  const { id } = req.params;
+  const { manager_id } = req.body;
+  try {
+    // Set centre_manager_id on centre
+    await pool.query('UPDATE centres SET centre_manager_id = $1 WHERE centre_id = $2', [manager_id, id]);
+    // Update the manager user's centre_id if not already set (optional)
+    await pool.query('UPDATE users SET centre_id = $1 WHERE user_id = $2', [id, manager_id]);
+    res.json({ message: 'Manager assigned' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 const { logAction } = require('../utils/auditLogger');
 
-// Public: only approved AND active resources
+// Public: only approved & active resources
 exports.getAll = async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -32,25 +32,68 @@ exports.getAllAdmin = async (req, res) => {
   }
 };
 
-// Create a new resource
+// Summary per school (admin)
+exports.getSummary = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT c.centre_id, c.centre_name,
+              COUNT(r.resource_id) AS total_resources,
+              COUNT(CASE WHEN r.is_approved = true AND r.is_active = true THEN 1 END) AS approved_resources
+       FROM centres c
+       LEFT JOIN users u ON u.centre_id = c.centre_id AND u.role = 'MANAGER'
+       LEFT JOIN resources r ON r.uploaded_by = u.user_id
+       GROUP BY c.centre_id, c.centre_name
+       ORDER BY c.centre_name`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Resources belonging to the principal's school
+exports.getMyResources = async (req, res) => {
+  try {
+    const manager = await pool.query(
+      'SELECT centre_id FROM users WHERE user_id = $1',
+      [req.user.id]
+    );
+    if (!manager.rows[0]?.centre_id) return res.json([]);
+
+    const centreId = manager.rows[0].centre_id;
+    const { rows } = await pool.query(
+      `SELECT r.*, u.full_name AS uploaded_by_name
+       FROM resources r
+       LEFT JOIN users u ON r.uploaded_by = u.user_id
+       WHERE r.centre_id = $1 AND r.is_active = true
+       ORDER BY r.created_at DESC`,
+      [centreId]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Create a new resource (auto‑links centre for MANAGER)
 exports.create = async (req, res) => {
   const { title, description, type, grade_start, grade_end, subject, language, tags } = req.body;
   const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
-  // Ensure tags is a JSON array
   let tagsArray = [];
   if (tags) {
-    if (Array.isArray(tags)) {
-      tagsArray = tags;
-    } else if (typeof tags === 'string') {
-      tagsArray = tags.split(',').map(t => t.trim()).filter(t => t.length > 0);
-    }
+    if (Array.isArray(tags)) tagsArray = tags;
+    else if (typeof tags === 'string') tagsArray = tags.split(',').map(t => t.trim()).filter(t => t.length > 0);
   }
 
   try {
+    // Get user's centre_id (for managers it will be their school; for admins null)
+    const centreResult = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
+    const centreId = centreResult.rows[0]?.centre_id;
+
     const { rows: [resource] } = await pool.query(
-      `INSERT INTO resources (title, description, type, grade_start, grade_end, subject, language, tags, file_url, uploaded_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10) RETURNING *`,
+      `INSERT INTO resources (title, description, type, grade_start, grade_end, subject, language, tags, file_url, uploaded_by, centre_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11) RETURNING *`,
       [
         title,
         description,
@@ -61,7 +104,8 @@ exports.create = async (req, res) => {
         language,
         JSON.stringify(tagsArray),
         fileUrl,
-        req.user.id
+        req.user.id,
+        centreId
       ]
     );
     await logAction({
@@ -86,7 +130,6 @@ exports.update = async (req, res) => {
     const { rows: [current] } = await pool.query('SELECT * FROM resources WHERE resource_id = $1', [id]);
     if (!current) return res.status(404).json({ message: 'Resource not found' });
 
-    // Merge new values with existing ones (form may not send all fields)
     const newTitle = title !== undefined ? title : current.title;
     const newDescription = description !== undefined ? description : current.description;
     const newType = type !== undefined ? type : current.type;
@@ -98,11 +141,8 @@ exports.update = async (req, res) => {
 
     let newTags = current.tags;
     if (tags !== undefined) {
-      if (Array.isArray(tags)) {
-        newTags = tags;
-      } else if (typeof tags === 'string') {
-        newTags = tags.split(',').map(t => t.trim()).filter(t => t.length > 0);
-      }
+      if (Array.isArray(tags)) newTags = tags;
+      else if (typeof tags === 'string') newTags = tags.split(',').map(t => t.trim()).filter(t => t.length > 0);
     }
 
     const { rows: [resource] } = await pool.query(
@@ -141,7 +181,7 @@ exports.approve = async (req, res) => {
   }
 };
 
-// Archive a resource (set is_active = false)
+// Archive (soft delete)
 exports.archive = async (req, res) => {
   const { id } = req.params;
   try {

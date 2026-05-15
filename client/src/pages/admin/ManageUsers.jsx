@@ -10,21 +10,41 @@ const ManageUsers = () => {
 
   const handleChange = (e) => setForm({...form, [e.target.name]: e.target.value});
 
-  const create = async (e) => {
+  const createUser = async (e) => {
     e.preventDefault();
     try {
       await api.post('/users', form);
       toast.success('User created');
       const { data } = await api.get('/users');
       setUsers(data);
+      setForm({ full_name: '', email: '', password: '', role: 'FACILITATOR' });
     } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
+  };
+
+  const toggleActive = async (userId, currentStatus) => {
+    const newStatus = !currentStatus;
+    await api.put(`/users/${userId}`, { is_active: newStatus });
+    toast.success(`User ${newStatus ? 'activated' : 'deactivated'}`);
+    const { data } = await api.get('/users');
+    setUsers(data);
+  };
+
+  const deleteUser = async (userId) => {
+    if (window.confirm('Delete this user?')) {
+      await api.delete(`/users/${userId}`);
+      toast.success('Deleted');
+      const { data } = await api.get('/users');
+      setUsers(data);
+    }
   };
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">User Management</h1>
-      <div className="bg-white p-4 rounded shadow mb-6">
-        <form onSubmit={create} className="grid grid-cols-2 gap-3">
+
+      <div className="bg-white p-6 rounded shadow mb-6">
+        <h2 className="text-lg font-medium mb-3">Create New User</h2>
+        <form onSubmit={createUser} className="grid grid-cols-2 gap-4">
           <input name="full_name" placeholder="Full Name" value={form.full_name} onChange={handleChange} className="border rounded px-3 py-2" required />
           <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} className="border rounded px-3 py-2" required />
           <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} className="border rounded px-3 py-2" required />
@@ -37,11 +57,30 @@ const ManageUsers = () => {
 
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50"><tr><th className="px-6 py-3 text-left">Name</th><th>Email</th><th>Role</th><th>Active</th></tr></thead>
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">School</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+            </tr>
+          </thead>
           <tbody className="divide-y divide-gray-200">
             {users.map(u => (
               <tr key={u.user_id}>
-                <td className="px-6 py-4">{u.full_name}</td><td className="px-6 py-4">{u.email}</td><td className="px-6 py-4">{u.role}</td><td className="px-6 py-4">{u.is_active ? 'Yes' : 'No'}</td>
+                <td className="px-6 py-4">{u.full_name}</td>
+                <td className="px-6 py-4">{u.email}</td>
+                <td className="px-6 py-4">{u.role}</td>
+                <td className="px-6 py-4">{u.centre_name || '–'}</td>
+                <td className="px-6 py-4">{u.is_active ? 'Yes' : 'No'}</td>
+                <td className="px-6 py-4 flex space-x-2">
+                  <button onClick={() => toggleActive(u.user_id, u.is_active)} className="text-blue-600 hover:underline">
+                    {u.is_active ? 'Deactivate' : 'Activate'}
+                  </button>
+                  <button onClick={() => deleteUser(u.user_id)} className="text-red-600 hover:underline">Delete</button>
+                </td>
               </tr>
             ))}
           </tbody>
