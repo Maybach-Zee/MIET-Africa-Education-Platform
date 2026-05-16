@@ -9,7 +9,8 @@ const {
   getSessionLearners,
   saveAttendance,
   getCourseLearners,
-  createAssessment
+  createAssessment,
+  getSchool
 } = require('../controllers/facilitatorController');
 
 router.get('/courses', verifyToken, authorize('FACILITATOR'), getMyCourses);
@@ -20,5 +21,6 @@ router.get('/sessions/:sessionId/learners', verifyToken, authorize('FACILITATOR'
 router.post('/sessions/:sessionId/attendance', verifyToken, authorize('FACILITATOR'), saveAttendance);
 router.get('/courses/:courseId/learners', verifyToken, authorize('FACILITATOR'), getCourseLearners);
 router.post('/assessments', verifyToken, authorize('FACILITATOR'), createAssessment);
+router.get('/school', verifyToken, authorize('FACILITATOR'), getSchool);
 
 module.exports = router;

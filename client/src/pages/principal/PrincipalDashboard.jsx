@@ -10,6 +10,8 @@ const PrincipalDashboard = () => {
   const [teachers, setTeachers] = useState([]);
   const [resources, setResources] = useState([]);
   const [events, setEvents] = useState([]);
+  const [learnerCount, setLearnerCount] = useState(0);
+  const [courseCount, setCourseCount] = useState(0);
 
   // Form state for adding a teacher
   const [newTeacher, setNewTeacher] = useState({ full_name: '', email: '', password: '' });
@@ -51,10 +53,26 @@ const PrincipalDashboard = () => {
 
   useEffect(() => {
     fetchCentre();
-    fetchTeachers();
-    fetchResources();
-    fetchEvents();
   }, []);
+  
+  useEffect(() => {
+    if (centre?.centre_id) {
+      // Fetch learner count
+      api.get(`/learners?centre_id=${centre.centre_id}`)
+        .then(res => setLearnerCount(res.data.length))
+        .catch(() => setLearnerCount(0));
+  
+      // Fetch course count
+      api.get('/courses/mine')
+        .then(res => setCourseCount(res.data.length))
+        .catch(() => setCourseCount(0));
+  
+      // Fetch teachers, resources, events
+      fetchTeachers();
+      fetchResources();
+      fetchEvents();
+    }
+  }, [centre]);
 
   // ---- Teacher management ----
   const handleAddTeacher = async (e) => {
@@ -115,22 +133,22 @@ const PrincipalDashboard = () => {
           </span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <div className="bg-indigo-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-500">Teachers</p>
-            <p className="text-2xl font-bold text-indigo-600">{teachers.length}</p>
-          </div>
-          <div className="bg-green-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-500">Learners Enrolled</p>
-            <p className="text-2xl font-bold text-green-600">{centre.enrolled_learners || 0}</p>
-          </div>
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-500">Resources</p>
-            <p className="text-2xl font-bold text-purple-600">{resources.length}</p>
-          </div>
-          <div className="bg-orange-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-500">Events</p>
-            <p className="text-2xl font-bold text-orange-600">{events.length}</p>
-          </div>
+        <div className="bg-indigo-50 p-4 rounded-lg">
+  <p className="text-sm text-gray-500">Teachers</p>
+  <p className="text-2xl font-bold text-indigo-600">{teachers.length}</p>
+</div>
+<div className="bg-green-50 p-4 rounded-lg">
+  <p className="text-sm text-gray-500">Learners Enrolled</p>
+  <p className="text-2xl font-bold text-green-600">{learnerCount}</p>
+</div>
+<div className="bg-purple-50 p-4 rounded-lg">
+  <p className="text-sm text-gray-500">Courses</p>
+  <p className="text-2xl font-bold text-purple-600">{courseCount}</p>
+</div>
+<div className="bg-orange-50 p-4 rounded-lg">
+  <p className="text-sm text-gray-500">Resources</p>
+  <p className="text-2xl font-bold text-orange-600">{resources.length}</p>
+</div>
         </div>
       </div>
 

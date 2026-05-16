@@ -4,7 +4,8 @@ const pool = require('../config/db');
 exports.getMyCourses = async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT c.*, fa.is_primary
+      `SELECT c.*, fa.is_primary,
+              (SELECT COUNT(*) FROM enrolments e WHERE e.course_id = c.course_id) AS learner_count
        FROM facilitator_assignments fa
        JOIN courses c ON fa.course_id = c.course_id
        WHERE fa.user_id = $1 AND c.is_active = true
@@ -182,14 +183,27 @@ exports.getSessionLearners = async (req, res) => {
   // Record a new assessment
   exports.createAssessment = async (req, res) => {
     const { enrolment_id, module_title, assessment_type, score, max_score, unit_standard_code, assessment_date } = req.body;
-    // Verify facilitator is assigned to the enrolment's course
+  
+    // Verify facilitator is assigned to this enrolment's course
     const check = await pool.query(
       `SELECT 1 FROM facilitator_assignments fa
        JOIN enrolments e ON e.course_id = fa.course_id
        WHERE fa.user_id = $1 AND e.enrolment_id = $2`,
       [req.user.id, enrolment_id]
     );
-    if (check.rows.length === 0) return res.status(403).json({ message: 'Not authorised for this enrolment' });
+    if (check.rows.length === 0) return res.status(403).json({ message: 'Not authorised' });
+  
+    // Check for duplicate assessment type per enrolment and module
+    const duplicate = await pool.query(
+      `SELECT 1 FROM assessments
+       WHERE enrolment_id = $1 AND module_title = $2 AND assessment_type = $3`,
+      [enrolment_id, module_title, assessment_type]
+    );
+    if (duplicate.rows.length > 0) {
+      return res.status(409).json({
+        message: `Learner already has a ${assessment_type} assessment for module "${module_title}".`
+      });
+    }
   
     try {
       const { rows: [assessment] } = await pool.query(
@@ -201,4 +215,16 @@ exports.getSessionLearners = async (req, res) => {
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
+  };
+
+  exports.getSchool = async (req, res) => {
+    try {
+      const user = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
+      if (!user.rows[0]?.centre_id) return res.json(null);
+      const { rows: [centre] } = await pool.query(
+        'SELECT * FROM centres WHERE centre_id = $1',
+        [user.rows[0].centre_id]
+      );
+      res.json(centre);
+    } catch (err) { res.status(500).json({ message: err.message }); }
   };

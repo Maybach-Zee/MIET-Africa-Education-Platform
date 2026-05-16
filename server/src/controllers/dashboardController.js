@@ -43,3 +43,23 @@ exports.getCourseStats = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.getSchoolSummary = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT c.centre_id, c.centre_name, c.province_id, p.province_name,
+              COUNT(DISTINCT l.learner_id) AS total_learners,
+              COUNT(DISTINCT co.course_id) FILTER (WHERE co.is_active = true) AS active_courses
+       FROM centres c
+       LEFT JOIN provinces p ON c.province_id = p.province_id
+       LEFT JOIN learners l ON l.centre_id = c.centre_id
+       LEFT JOIN courses co ON co.centre_id = c.centre_id
+       WHERE c.is_active = true
+       GROUP BY c.centre_id, c.centre_name, c.province_id, p.province_name
+       ORDER BY c.centre_name`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

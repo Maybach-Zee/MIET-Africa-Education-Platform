@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken, authorize } = require('../middleware/auth');
-const { getAll, getPrincipalEvents, create, cancel,  getFacilitatorEvents, registerForEvent, cancelRegistration, getMyRegistrations, sendReminders } = require('../controllers/eventController');
+const { getAll, getPrincipalEvents, create, cancel,  getFacilitatorEvents, registerForEvent, cancelRegistration, getMyRegistrations, sendReminders, getRegistrations } = require('../controllers/eventController');
 
 router.get('/', verifyToken, getAll);
 router.get('/principal', verifyToken, authorize('MANAGER'), getPrincipalEvents);
 router.post('/', verifyToken, authorize('ADMIN', 'MANAGER'), create);
 router.put('/:id/cancel', verifyToken, authorize('ADMIN', 'MANAGER'), cancel);
+router.get('/:id/registrations', verifyToken, authorize('MANAGER'), getRegistrations);
 
 // Facilitator specific
 router.get('/facilitator', verifyToken, authorize('FACILITATOR'), getFacilitatorEvents);

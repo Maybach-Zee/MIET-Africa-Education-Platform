@@ -1,13 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken, authorize } = require('../middleware/auth');
-const { getAll, getMyCourses, create, update, remove, assignFacilitator } = require('../controllers/courseController');
+const { getByCentre, create, update, remove } = require('../controllers/learnerController');
 
-router.get('/', verifyToken, authorize('ADMIN', 'MANAGER'), getAll);
-router.get('/mine', verifyToken, authorize('MANAGER'), getMyCourses);
+router.get('/', verifyToken, authorize('ADMIN', 'MANAGER', 'FACILITATOR'), getByCentre);
 router.post('/', verifyToken, authorize('ADMIN', 'MANAGER'), create);
 router.put('/:id', verifyToken, authorize('ADMIN', 'MANAGER'), update);
 router.delete('/:id', verifyToken, authorize('ADMIN', 'MANAGER'), remove);
-router.put('/:id/assign-facilitator', verifyToken, authorize('ADMIN', 'MANAGER'), assignFacilitator);
 
 module.exports = router;

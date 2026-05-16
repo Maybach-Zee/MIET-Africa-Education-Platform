@@ -13,12 +13,14 @@ const Dashboard = () => {
   const [provinceStats, setProvinceStats] = useState([]);
   const [monthlyRegs, setMonthlyRegs] = useState([]);
   const [courseStats, setCourseStats] = useState([]);
+  const [schoolSummary, setSchoolSummary] = useState([]);
 
   useEffect(() => {
     api.get('/dashboard/summary').then(res => setSummary(res.data));
     api.get('/dashboard/province-stats').then(res => setProvinceStats(res.data));
     api.get('/dashboard/monthly-registrations').then(res => setMonthlyRegs(res.data));
     api.get('/dashboard/course-stats').then(res => setCourseStats(res.data));
+    api.get('/dashboard/school-summary').then(res => setSchoolSummary(res.data));
   }, []);
 
   const exportCSV = () => {
@@ -123,6 +125,35 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
       </div>
+
+      <div className="mt-8 bg-white p-6 rounded-lg shadow">
+  <h2 className="text-xl font-semibold mb-4">Schools Overview</h2>
+  <div className="overflow-x-auto">
+    <table className="min-w-full divide-y divide-gray-200">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">School</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Province</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Learners</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Active Courses</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-gray-200">
+        {schoolSummary.map(school => (
+          <tr key={school.centre_id}>
+            <td className="px-6 py-4 font-medium">{school.centre_name}</td>
+            <td className="px-6 py-4">{school.province_name}</td>
+            <td className="px-6 py-4">{school.total_learners}</td>
+            <td className="px-6 py-4">{school.active_courses}</td>
+          </tr>
+        ))}
+        {schoolSummary.length === 0 && (
+          <tr><td colSpan="4" className="px-6 py-4 text-center text-gray-500">No schools found.</td></tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
 
       {/* Resource Downloads / Training Completion Placeholders – we can add simple cards with mock data if not in API yet */}
       <div className="mt-6 bg-white p-6 rounded-lg shadow">

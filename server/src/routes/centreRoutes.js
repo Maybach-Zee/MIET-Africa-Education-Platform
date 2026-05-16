@@ -11,7 +11,8 @@ const {
   approve,
   reject,
   getMyCentre,
-  assignManager
+  assignManager,
+  updateMyCentre
 } = require('../controllers/centreController');
 
 const router = express.Router();
@@ -68,6 +69,18 @@ router.put(
   reject
 );
 
-router.put('/:id/assign-manager', verifyToken, authorize('ADMIN'), assignManager);
+router.put(
+  '/:id/assign-manager', 
+  verifyToken, 
+  authorize('ADMIN'), 
+  assignManager
+);
+
+router.put(
+  '/my-centre', 
+  verifyToken, 
+  authorize('MANAGER'),
+   updateMyCentre
+  );
 
 module.exports = router;

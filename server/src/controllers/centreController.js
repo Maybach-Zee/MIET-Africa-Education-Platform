@@ -379,3 +379,22 @@ exports.assignManager = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.updateMyCentre = async (req, res) => {
+  const { centre_name, address, city, postal_code, phone_number, email } = req.body;
+  // MANAGER can only update their own centre
+  const manager = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
+  if (!manager.rows[0]?.centre_id) return res.status(403).json({ message: 'No school linked' });
+  const centreId = manager.rows[0].centre_id;
+
+  try {
+    const { rows: [centre] } = await pool.query(
+      `UPDATE centres SET centre_name=$1, address=$2, city=$3, postal_code=$4, phone_number=$5, email=$6, updated_at=NOW()
+       WHERE centre_id=$7 RETURNING *`,
+      [centre_name, address, city, postal_code, phone_number, email, centreId]
+    );
+    res.json(centre);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

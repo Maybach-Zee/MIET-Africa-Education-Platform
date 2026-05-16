@@ -179,7 +179,7 @@ exports.getMyRegistrations = async (req, res) => {
        FROM event_registrations er
        JOIN sessions s ON er.session_id = s.session_id
        JOIN courses c ON s.course_id = c.course_id
-       WHERE er.user_id = $1 AND s.is_cancelled = false
+       WHERE er.user_id = $1
        ORDER BY s.session_date DESC`,
       [req.user.id]
     );
@@ -202,6 +202,82 @@ exports.sendReminders = async (req, res) => {
     // In a real system, you'd fetch registered users and send push/email.
     // For now, just log or return the events.
     res.json({ message: `Found ${events.length} events to remind`, events });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.registerForEvent = async (req, res) => {
+  const { session_id } = req.body;
+  try {
+    await pool.query(
+      `INSERT INTO event_registrations (session_id, user_id)
+       VALUES ($1, $2)
+       ON CONFLICT DO NOTHING`,
+      [session_id, req.user.id]
+    );
+    res.json({ message: 'Registered successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.cancelRegistration = async (req, res) => {
+  const { session_id } = req.body;
+  try {
+    await pool.query(
+      'DELETE FROM event_registrations WHERE session_id = $1 AND user_id = $2',
+      [session_id, req.user.id]
+    );
+    res.json({ message: 'Registration cancelled' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getMyRegistrations = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT er.registration_id, er.session_id, er.registered_at,
+              s.session_date, s.topic, c.title AS course_title
+       FROM event_registrations er
+       JOIN sessions s ON er.session_id = s.session_id
+       JOIN courses c ON s.course_id = c.course_id
+       WHERE er.user_id = $1
+       ORDER BY s.session_date DESC`,
+      [req.user.id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getRegistrations = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const manager = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
+    if (!manager.rows[0]?.centre_id) return res.status(403).json({ message: 'No school' });
+    const centreId = manager.rows[0].centre_id;
+
+    // Verify event belongs to manager's school
+    const eventCheck = await pool.query(
+      `SELECT 1 FROM sessions s
+       JOIN courses c ON s.course_id = c.course_id
+       WHERE s.session_id = $1 AND c.centre_id = $2`,
+      [id, centreId]
+    );
+    if (eventCheck.rows.length === 0) return res.status(404).json({ message: 'Event not found' });
+
+    const { rows } = await pool.query(
+      `SELECT u.user_id, u.full_name, u.email, er.registered_at
+       FROM event_registrations er
+       JOIN users u ON er.user_id = u.user_id
+       WHERE er.session_id = $1
+       ORDER BY u.full_name`,
+      [id]
+    );
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

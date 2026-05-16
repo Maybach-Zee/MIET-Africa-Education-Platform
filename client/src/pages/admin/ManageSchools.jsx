@@ -183,8 +183,7 @@ const ManageSchools = () => {
           <input name="postal_code" placeholder="Postal Code" value={form.postal_code} onChange={handleChange} className="border rounded px-3 py-2" />
           <input name="phone_number" placeholder="Phone" value={form.phone_number} onChange={handleChange} className="border rounded px-3 py-2" />
           <input name="email" placeholder="Email" value={form.email} onChange={handleChange} className="border rounded px-3 py-2" />
-          <input name="enrolled_learners" type="number" placeholder="Number of enrolled learners" value={form.enrolled_learners} onChange={handleChange} className="border rounded px-3 py-2" />
-
+          
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">School Location (click to place pin or select a city)</label>
             <MapPicker lat={form.gps_latitude} lng={form.gps_longitude} onChange={handleMapChange} />

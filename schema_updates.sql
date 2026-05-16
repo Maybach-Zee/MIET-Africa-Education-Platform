@@ -34,3 +34,11 @@ CREATE TABLE IF NOT EXISTS event_registrations (
   registered_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(session_id, user_id)
 );
+
+CREATE TABLE IF NOT EXISTS event_registrations (
+  registration_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  session_id UUID NOT NULL REFERENCES sessions(session_id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  registered_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(session_id, user_id)
+);
