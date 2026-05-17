@@ -14,7 +14,7 @@ const PrincipalEvents = () => {
   const [regs, setRegs] = useState([]);
 
   useEffect(() => {
-    api.get('/events/principal').then(res => setEvents(res.data)).catch(() => {});
+    api.get('/events/principal').then(res => setEvents(res.data)).catch(() => toast.error('Could not load events'));
     api.get('/courses/mine').then(res => setCourses(res.data)).catch(() => {});
   }, []);
 

@@ -87,6 +87,52 @@ exports.getTeachers = async (req, res) => {
   }
 };
 
+// Update a teacher's details (full_name, email)
+exports.updateTeacher = async (req, res) => {
+  const { id } = req.params; // user_id of the teacher
+  const { full_name, email } = req.body;
+
+  // Verify the manager owns this teacher
+  const manager = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
+  const teacher = await pool.query(
+    'SELECT centre_id FROM users WHERE user_id = $1 AND role = \'FACILITATOR\'',
+    [id]
+  );
+
+  if (!manager.rows[0]?.centre_id || !teacher.rows[0] || teacher.rows[0].centre_id !== manager.rows[0].centre_id) {
+    return res.status(403).json({ message: 'Not authorised' });
+  }
+
+  try {
+    await pool.query(
+      'UPDATE users SET full_name = $1, email = $2, updated_at = NOW() WHERE user_id = $3',
+      [full_name, email, id]
+    );
+    res.json({ message: 'Teacher updated' });
+  } catch (err) {
+    if (err.constraint === 'users_email_key') return res.status(409).json({ message: 'Email already exists' });
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Toggle teacher active status
+exports.toggleTeacherActive = async (req, res) => {
+  const { id } = req.params;
+  const manager = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
+  const teacher = await pool.query(
+    'SELECT centre_id, is_active FROM users WHERE user_id = $1 AND role = \'FACILITATOR\'',
+    [id]
+  );
+
+  if (!manager.rows[0]?.centre_id || !teacher.rows[0] || teacher.rows[0].centre_id !== manager.rows[0].centre_id) {
+    return res.status(403).json({ message: 'Not authorised' });
+  }
+
+  const newStatus = !teacher.rows[0].is_active;
+  await pool.query('UPDATE users SET is_active = $1 WHERE user_id = $2', [newStatus, id]);
+  res.json({ is_active: newStatus });
+};
+
 // userController.js
 exports.getUnassignedManagers = async (req, res) => {
   try {

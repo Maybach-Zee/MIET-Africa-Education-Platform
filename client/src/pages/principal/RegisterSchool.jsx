@@ -57,7 +57,25 @@ const SchoolManagement = () => {
   // Teachers list for facilitator assignment
   const [teachers, setTeachers] = useState([]);
 
-  // Load centre
+  // ---------- Helper: calculate age from South African ID number (YYMMDD) ----------
+  const getAgeFromId = (idNumber) => {
+    if (!idNumber || idNumber.length !== 13) return '';
+    const year = parseInt(idNumber.substring(0, 2), 10);
+    const month = idNumber.substring(2, 4);
+    const day = idNumber.substring(4, 6);
+    const currentYear = new Date().getFullYear();
+    // Assume 19xx if year > current two-digit year, else 20xx
+    const fullYear = year > (currentYear % 100) ? 1900 + year : 2000 + year;
+    const birthDate = new Date(`${fullYear}-${month}-${day}`);
+    if (isNaN(birthDate.getTime())) return '';
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+    return age;
+  };
+
+  // ---------- Data fetching ----------
   const fetchCentre = () => {
     api.get('/centres/my-centre')
       .then(res => {
@@ -142,7 +160,6 @@ const SchoolManagement = () => {
         toast.success('Course added');
       }
 
-      // Assign facilitator if selected
       if (courseForm.facilitator_id && courseId) {
         await api.put(`/courses/${courseId}/assign-facilitator`, {
           facilitator_id: courseForm.facilitator_id
@@ -157,11 +174,7 @@ const SchoolManagement = () => {
   };
 
   const handleEditCourse = (course) => {
-    setCourseForm({
-      ...course,
-      course_id: course.course_id,
-      facilitator_id: '' // reset; you could fetch existing assignment
-    });
+    setCourseForm({ ...course, course_id: course.course_id, facilitator_id: '' });
     setEditingCourse(true);
   };
 
@@ -184,14 +197,32 @@ const SchoolManagement = () => {
 
   const handleLearnerChange = (e) => setLearnerForm({ ...learnerForm, [e.target.name]: e.target.value });
 
+  // Auto-fill date_of_birth from ID number if not set
+  const autoFillDOB = (idNumber) => {
+    if (!idNumber || idNumber.length !== 13) return '';
+    const year = idNumber.substring(0, 2);
+    const month = idNumber.substring(2, 4);
+    const day = idNumber.substring(4, 6);
+    const currentYear = new Date().getFullYear();
+    const fullYear = year > (currentYear % 100) ? 1900 + year : 2000 + year;
+    return `${fullYear}-${month}-${day}`;
+  };
+
   const handleAddOrUpdateLearner = async (e) => {
     e.preventDefault();
+
+    // Auto-populate date_of_birth from ID if empty
+    let payload = { ...learnerForm };
+    if (!payload.date_of_birth && payload.id_number && payload.id_number.length === 13) {
+      payload.date_of_birth = autoFillDOB(payload.id_number);
+    }
+
     try {
-      if (editingLearner && learnerForm.learner_id) {
-        await api.put(`/learners/${learnerForm.learner_id}`, learnerForm);
+      if (editingLearner && payload.learner_id) {
+        await api.put(`/learners/${payload.learner_id}`, payload);
         toast.success('Learner updated');
       } else {
-        await api.post('/learners', { ...learnerForm, centre_id: centre.centre_id });
+        await api.post('/learners', { ...payload, centre_id: centre.centre_id });
         toast.success('Learner added');
       }
       resetLearnerForm();
@@ -208,9 +239,23 @@ const SchoolManagement = () => {
 
   const handleDeleteLearner = async (id) => {
     if (window.confirm('Delete this learner?')) {
-      await api.delete(`/learners/${id}`);
-      toast.success('Deleted');
+      try {
+        await api.delete(`/learners/${id}`);
+        toast.success('Deleted');
+        loadLearners();
+      } catch (err) {
+        toast.error('Cannot delete learner – they may be linked to enrolments or assessments.');
+      }
+    }
+  };
+
+  const toggleLearnerStatus = async (learnerId) => {
+    try {
+      await api.put(`/learners/${learnerId}/toggle-status`);
+      toast.success('Status updated');
       loadLearners();
+    } catch (err) {
+      toast.error('Failed to toggle status');
     }
   };
 
@@ -229,6 +274,18 @@ const SchoolManagement = () => {
       loadEnrolments();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Enrolment failed');
+    }
+  };
+
+  const withdrawEnrolment = async (enrolmentId) => {
+    if (window.confirm('Mark this enrolment as withdrawn?')) {
+      try {
+        await api.put(`/enrolments/${enrolmentId}/status`, { completion_status: 'WITHDRAWN' });
+        toast.success('Enrolment withdrawn');
+        loadEnrolments();
+      } catch (err) {
+        toast.error('Failed to update enrolment');
+      }
     }
   };
 
@@ -342,7 +399,7 @@ const SchoolManagement = () => {
             <input name="first_name" placeholder="First Name" value={learnerForm.first_name} onChange={handleLearnerChange} className="border rounded px-3 py-2" required />
             <input name="last_name" placeholder="Last Name" value={learnerForm.last_name} onChange={handleLearnerChange} className="border rounded px-3 py-2" required />
             <input name="id_number" placeholder="ID Number" value={learnerForm.id_number} onChange={handleLearnerChange} className="border rounded px-3 py-2" required maxLength={13} />
-            <input name="date_of_birth" type="date" value={learnerForm.date_of_birth} onChange={handleLearnerChange} className="border rounded px-3 py-2" required />
+            <input name="date_of_birth" type="date" value={learnerForm.date_of_birth} onChange={handleLearnerChange} className="border rounded px-3 py-2" />
             <select name="gender" value={learnerForm.gender} onChange={handleLearnerChange} className="border rounded px-3 py-2">
               <option>MALE</option><option>FEMALE</option><option>NON_BINARY</option><option>PREFER_NOT_TO_SAY</option>
             </select>
@@ -360,6 +417,7 @@ const SchoolManagement = () => {
                 <tr>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID Number</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Age</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
@@ -369,15 +427,23 @@ const SchoolManagement = () => {
                   <tr key={l.learner_id}>
                     <td className="px-4 py-2">{l.first_name} {l.last_name}</td>
                     <td className="px-4 py-2">{l.id_number}</td>
-                    <td className="px-4 py-2">{l.status}</td>
+                    <td className="px-4 py-2">{getAgeFromId(l.id_number)}</td>
+                    <td className="px-4 py-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${l.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {l.status}
+                      </span>
+                    </td>
                     <td className="px-4 py-2 flex gap-2">
                       <button onClick={() => handleEditLearner(l)} className="text-blue-600 hover:underline text-sm">Edit</button>
+                      <button onClick={() => toggleLearnerStatus(l.learner_id)} className="text-orange-600 hover:underline text-sm">
+                        {l.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                      </button>
                       <button onClick={() => handleDeleteLearner(l.learner_id)} className="text-red-600 hover:underline text-sm">Delete</button>
                     </td>
                   </tr>
                 ))}
                 {learners.length === 0 && (
-                  <tr><td colSpan="4" className="px-4 py-2 text-center text-gray-500">No students yet.</td></tr>
+                  <tr><td colSpan="5" className="px-4 py-2 text-center text-gray-500">No students yet.</td></tr>
                 )}
               </tbody>
             </table>
@@ -401,7 +467,7 @@ const SchoolManagement = () => {
               <label className="block text-sm font-medium mb-1">Learner</label>
               <select value={selectedLearner} onChange={e => setSelectedLearner(e.target.value)} className="w-full border rounded px-3 py-2">
                 <option value="">Select Learner</option>
-                {learners.map(l => <option key={l.learner_id} value={l.learner_id}>{l.first_name} {l.last_name}</option>)}
+                {learners.filter(l => l.status === 'ACTIVE').map(l => <option key={l.learner_id} value={l.learner_id}>{l.first_name} {l.last_name}</option>)}
               </select>
             </div>
             <div className="flex items-end">
@@ -418,6 +484,7 @@ const SchoolManagement = () => {
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Course</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Enrol Date</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -427,10 +494,15 @@ const SchoolManagement = () => {
                     <td className="px-4 py-2">{e.course_title}</td>
                     <td className="px-4 py-2">{e.enrol_date}</td>
                     <td className="px-4 py-2">{e.completion_status}</td>
+                    <td className="px-4 py-2">
+                      {e.completion_status !== 'WITHDRAWN' && e.completion_status !== 'COMPLETED' && (
+                        <button onClick={() => withdrawEnrolment(e.enrolment_id)} className="text-red-600 hover:underline text-sm">Withdraw</button>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {enrolmentsList.length === 0 && (
-                  <tr><td colSpan="4" className="px-4 py-2 text-center text-gray-500">No enrolments yet.</td></tr>
+                  <tr><td colSpan="5" className="px-4 py-2 text-center text-gray-500">No enrolments yet.</td></tr>
                 )}
               </tbody>
             </table>

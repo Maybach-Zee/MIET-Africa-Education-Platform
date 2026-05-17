@@ -79,6 +79,30 @@ exports.update = async (req, res) => {
   }
 };
 
+exports.toggleStatus = async (req, res) => {
+  const { id } = req.params;
+
+  // Ownership check for MANAGER
+  if (req.user.role === 'MANAGER') {
+    const learnerCheck = await pool.query('SELECT centre_id FROM learners WHERE learner_id = $1', [id]);
+    const manager = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
+    if (!manager.rows[0]?.centre_id || !learnerCheck.rows[0] || learnerCheck.rows[0].centre_id !== manager.rows[0].centre_id) {
+      return res.status(403).json({ message: 'Not authorised' });
+    }
+  }
+
+  try {
+    // Toggle between ACTIVE and INACTIVE (you can also use SUSPENDED if needed)
+    const learner = await pool.query('SELECT status FROM learners WHERE learner_id = $1', [id]);
+    if (!learner.rows[0]) return res.status(404).json({ message: 'Learner not found' });
+    const newStatus = learner.rows[0].status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    await pool.query('UPDATE learners SET status = $1, updated_at = NOW() WHERE learner_id = $2', [newStatus, id]);
+    res.json({ status: newStatus });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 exports.remove = async (req, res) => {
   const { id } = req.params;
   if (req.user.role === 'MANAGER') {

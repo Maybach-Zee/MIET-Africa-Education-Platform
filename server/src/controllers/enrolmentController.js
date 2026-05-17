@@ -65,8 +65,14 @@ exports.updateStatus = async (req, res) => {
 
 exports.getForSchool = async (req, res) => {
   try {
-    const manager = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
-    if (!manager.rows[0]?.centre_id) return res.json([]);
+    // Only manager can call this – check their centre
+    const manager = await pool.query(
+      'SELECT centre_id FROM users WHERE user_id = $1 AND role = \'MANAGER\'',
+      [req.user.id]
+    );
+    if (!manager.rows[0]?.centre_id) {
+      return res.json([]);
+    }
     const centreId = manager.rows[0].centre_id;
 
     const { rows } = await pool.query(
