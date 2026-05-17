@@ -64,17 +64,32 @@ exports.login = async (req, res) => {
       description: 'Successful login', ipAddress: req.ip, actionResult: 'SUCCESS'
     });
 
-    res.json({
-      accessToken,
-      refreshToken,
-      user: {
-        id: user.user_id,
-        full_name: user.full_name,
-        email: user.email,
-        role: user.role,
-        must_change_password: user.must_change_password,
-      },
-    });
+    let school = null;
+    
+if (user.role === 'MANAGER' || user.role === 'FACILITATOR') {
+  const centreResult = await pool.query(
+    `SELECT registration_status, is_active
+     FROM centres
+     WHERE centre_id = (SELECT centre_id FROM users WHERE user_id = $1)`,
+    [user.user_id]
+  );
+  if (centreResult.rows[0]) {
+    school = centreResult.rows[0];
+  }
+}
+
+res.json({
+  accessToken, refreshToken,
+  user: {
+    id: user.user_id,
+    full_name: user.full_name,
+    email: user.email,
+    role: user.role,
+    must_change_password: user.must_change_password,
+    school
+  },
+});
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });

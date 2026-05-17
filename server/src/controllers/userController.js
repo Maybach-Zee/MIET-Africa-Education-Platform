@@ -150,21 +150,85 @@ exports.getUnassignedManagers = async (req, res) => {
 exports.update = async (req, res) => {
   const { id } = req.params;
   const { full_name, role, is_active } = req.body;
+
   try {
+    // If deactivating a MANAGER, deactivate all FACILITATOR in same centre
+    if (is_active === false) {
+      const target = await pool.query(
+        'SELECT role, centre_id FROM users WHERE user_id = $1',
+        [id]
+      );
+      if (target.rows[0]?.role === 'MANAGER' && target.rows[0].centre_id) {
+        await pool.query(
+          `UPDATE users SET is_active = false
+           WHERE role = 'FACILITATOR' AND centre_id = $1`,
+          [target.rows[0].centre_id]
+        );
+      }
+    }
+
     await pool.query(
-      'UPDATE users SET full_name=$1, role=$2, is_active=$3 WHERE user_id=$4',
+      `UPDATE users SET full_name=$1, role=$2, is_active=$3 WHERE user_id=$4`,
       [full_name, role, is_active, id]
     );
-    await logAction({ userId: req.user.id, userEmail: req.user.email, action: 'UPDATE', entityType: 'users', entityId: id, description: 'User updated', actionResult: 'SUCCESS' });
+    await logAction({
+      userId: req.user.id,
+      userEmail: req.user.email,
+      action: 'UPDATE',
+      entityType: 'users',
+      entityId: id,
+      description: 'User updated',
+      actionResult: 'SUCCESS'
+    });
     res.json({ message: 'Updated' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 exports.remove = async (req, res) => {
   const { id } = req.params;
   try {
+    const userResult = await pool.query('SELECT role, centre_id FROM users WHERE user_id = $1', [id]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const user = userResult.rows[0];
+
+    // If manager, cascade-delete all facilitators in their school first
+    if (user.role === 'MANAGER' && user.centre_id) {
+      // Remove facilitator assignments for all facilitators in the school
+      await pool.query(
+        `DELETE FROM facilitator_assignments WHERE user_id IN (
+          SELECT user_id FROM users WHERE role = 'FACILITATOR' AND centre_id = $1
+        )`,
+        [user.centre_id]
+      );
+      // Delete the facilitators themselves
+      await pool.query('DELETE FROM users WHERE role = \'FACILITATOR\' AND centre_id = $1', [user.centre_id]);
+    } else if (user.role === 'FACILITATOR') {
+      // Remove facilitator assignments for this single facilitator
+      await pool.query('DELETE FROM facilitator_assignments WHERE user_id = $1', [id]);
+    }
+
+    // Now delete the user
     await pool.query('DELETE FROM users WHERE user_id = $1', [id]);
-    await logAction({ userId: req.user.id, userEmail: req.user.email, action: 'DELETE', entityType: 'users', entityId: id, description: 'User deleted', actionResult: 'SUCCESS' });
+
+    await logAction({
+      userId: req.user.id,
+      userEmail: req.user.email,
+      action: 'DELETE',
+      entityType: 'users',
+      entityId: id,
+      description: 'User deleted',
+      actionResult: 'SUCCESS'
+    });
     res.json({ message: 'Deleted' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) {
+    console.error('Delete user error:', err);
+    if (err.code === '23503') {
+      return res.status(400).json({ message: 'Cannot delete user because they have associated records. Consider deactivating instead.' });
+    }
+    res.status(500).json({ message: 'An error occurred while deleting the user.' });
+  }
 };

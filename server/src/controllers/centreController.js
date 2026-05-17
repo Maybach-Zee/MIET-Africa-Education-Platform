@@ -442,3 +442,14 @@ exports.updateStatus = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.publicList = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT centre_id, centre_name FROM centres WHERE is_active = true ORDER BY centre_name'
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

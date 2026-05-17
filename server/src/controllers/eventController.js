@@ -282,3 +282,22 @@ exports.getRegistrations = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.getByCentre = async (req, res) => {
+  const { centre_id } = req.query;
+  if (!centre_id) return res.status(400).json({ message: 'centre_id required' });
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT s.*, c.title AS course_title
+       FROM sessions s
+       JOIN courses c ON s.course_id = c.course_id
+       WHERE c.centre_id = $1 AND s.is_cancelled = false
+       ORDER BY s.session_date DESC`,
+      [centre_id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

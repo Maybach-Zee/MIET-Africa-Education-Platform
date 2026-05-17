@@ -25,6 +25,12 @@ const IconArrow = () => (
   </svg>
 );
 
+const IconArrowLeft = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+    <path d="M19 12H5M12 19l-7-7 7-7"/>
+  </svg>
+);
+
 const IconEye = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
@@ -353,6 +359,51 @@ body {
     padding: 2rem;
   }
 }
+
+.back-home-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 10px;
+  padding: .45rem 1rem;
+  font-size: .82rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.9);
+  cursor: pointer;
+  transition: .2s ease;
+  font-family: 'DM Sans', sans-serif;
+  backdrop-filter: blur(8px);
+  margin-bottom: 1.5rem;
+}
+
+.back-home-btn:hover {
+  background: rgba(255,255,255,.25);
+  color: white;
+}
+
+.back-home-btn-right {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: .45rem 1rem;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: .2s ease;
+  font-family: 'DM Sans', sans-serif;
+  margin-bottom: 1.5rem;
+}
+
+.back-home-btn-right:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
 `;
 
 const roleRoutes = {
@@ -393,6 +444,10 @@ const Login = () => {
 
         <div className="login-left">
           <div className="l-content">
+
+            <button className="back-home-btn" onClick={() => navigate('/')}>
+              <IconArrowLeft /> Back to Home
+            </button>
 
             <div className="l-logo">
               MIET Africa
@@ -437,6 +492,10 @@ const Login = () => {
 
         <div className="login-right">
           <div className="r-card">
+
+            <button className="back-home-btn-right" onClick={() => navigate('/')}>
+              <IconArrowLeft /> Back to Home
+            </button>
 
             <h2 className="r-heading">
               Welcome Back

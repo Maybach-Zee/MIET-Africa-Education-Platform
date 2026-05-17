@@ -91,3 +91,48 @@ exports.getForSchool = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.publicImpact = async (req, res) => {
+  try {
+    const { rows: [stats] } = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM learners WHERE status = 'ACTIVE') AS total_learners,
+        (SELECT COUNT(*) FROM certificates WHERE status = 'ISSUED') AS total_certificates,
+        (SELECT COUNT(*) FROM centres WHERE is_active = true) AS total_schools,
+        (SELECT COUNT(*) FROM users WHERE role = 'FACILITATOR' AND is_active = true) AS total_teachers
+    `);
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.publicDonate = async (req, res) => {
+  const { donor_name, donor_email, amount, purpose, centre_id } = req.body;
+  const receipt_number = 'RCP-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  try {
+    const { rows: [donation] } = await pool.query(
+      `INSERT INTO donations (donor_name, donor_email, amount, purpose, centre_id, payment_method, receipt_number, payment_status)
+       VALUES ($1,$2,$3,$4,$5,'CARD',$6,'PENDING') RETURNING *`,
+      [donor_name, donor_email, amount, purpose, centre_id || null, receipt_number]
+    );
+    res.status(201).json({ message: 'Donation recorded', receipt_number });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// For admin: update donation status
+exports.processDonation = async (req, res) => {
+  const { id } = req.params;
+  const { payment_status, notes } = req.body;
+  try {
+    await pool.query(
+      'UPDATE donations SET payment_status=$1, notes=$2 WHERE donation_id=$3',
+      [payment_status, notes, id]
+    );
+    res.json({ message: 'Updated' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

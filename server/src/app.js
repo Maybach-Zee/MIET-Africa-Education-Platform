@@ -24,7 +24,8 @@ const routeDefinitions = [
   { path: '/api/provinces',   route: require('./routes/provinceRoutes')},
   { path: '/api/courses',     route: require('./routes/courseRoutes')},
   { path: '/api/facilitator', route: require('./routes/facilitatorRoutes')},
-  { path: '/api/learners', route: require('./routes/learnerRoutes')},
+  { path: '/api/learners',    route: require('./routes/learnerRoutes')},
+  { path: '/api/public',      route: require('./routes/publicRoutes')},
 ];
 
 // Mount routes and validate they are Express routers

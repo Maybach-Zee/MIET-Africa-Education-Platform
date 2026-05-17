@@ -42,3 +42,5 @@ CREATE TABLE IF NOT EXISTS event_registrations (
   registered_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(session_id, user_id)
 );
+
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS payment_status payment_status DEFAULT 'PENDING';

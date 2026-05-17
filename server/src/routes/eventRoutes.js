@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken, authorize } = require('../middleware/auth');
-const { getAll, getPrincipalEvents, create, cancel,  getFacilitatorEvents, registerForEvent, cancelRegistration, getMyRegistrations, sendReminders, getRegistrations } = require('../controllers/eventController');
+const { getAll, getPrincipalEvents, create, cancel,  getFacilitatorEvents, registerForEvent, cancelRegistration, getMyRegistrations, sendReminders, getRegistrations, getByCentre } = require('../controllers/eventController');
 
 router.get('/', verifyToken, getAll);
 router.get('/principal', verifyToken, authorize('MANAGER'), getPrincipalEvents);
@@ -17,5 +17,6 @@ router.get('/my-registrations', verifyToken, authorize('FACILITATOR'), getMyRegi
 
 // Reminders (admin only)
 router.post('/send-reminders', verifyToken, authorize('ADMIN'), sendReminders);
+router.get('/by-school', verifyToken, authorize('ADMIN'), getByCentre);
 
 module.exports = router;
