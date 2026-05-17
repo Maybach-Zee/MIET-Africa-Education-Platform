@@ -398,3 +398,47 @@ exports.updateMyCentre = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Toggle is_active
+exports.toggleActive = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows: [centre] } = await pool.query(
+      'UPDATE centres SET is_active = NOT is_active WHERE centre_id = $1 RETURNING *',
+      [id]
+    );
+    if (!centre) return res.status(404).json({ message: 'School not found' });
+    res.json(centre);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Update registration_status and/or is_active
+exports.updateStatus = async (req, res) => {
+  const { id } = req.params;
+  const { registration_status, is_active } = req.body;
+
+  const setClauses = [];
+  const values = [];
+
+  if (registration_status !== undefined) {
+    setClauses.push(`registration_status = $${values.length + 1}`);
+    values.push(registration_status);
+  }
+  if (is_active !== undefined) {
+    setClauses.push(`is_active = $${values.length + 1}`);
+    values.push(is_active);
+  }
+  if (setClauses.length === 0) return res.status(400).json({ message: 'No fields to update' });
+
+  values.push(id); // for WHERE clause
+  const query = `UPDATE centres SET ${setClauses.join(', ')} WHERE centre_id = $${values.length} RETURNING *`;
+  try {
+    const { rows: [centre] } = await pool.query(query, values);
+    if (!centre) return res.status(404).json({ message: 'School not found' });
+    res.json(centre);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

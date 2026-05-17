@@ -12,7 +12,9 @@ const {
   reject,
   getMyCentre,
   assignManager,
-  updateMyCentre
+  updateMyCentre,
+  toggleActive,
+  updateStatus
 } = require('../controllers/centreController');
 
 const router = express.Router();
@@ -82,5 +84,19 @@ router.put(
   authorize('MANAGER'),
    updateMyCentre
   );
+
+  router.put(
+    '/:id/toggle-active',
+     verifyToken,
+      authorize('ADMIN'),
+       toggleActive
+      );
+
+router.put(
+  '/:id/update-status',
+   verifyToken,
+    authorize('ADMIN'),
+     updateStatus
+    );
 
 module.exports = router;

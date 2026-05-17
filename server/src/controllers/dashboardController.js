@@ -1,5 +1,20 @@
 const pool = require('../config/db');
 
+exports.getAdminStats = async (req, res) => {
+  try {
+    const { rows: [stats] } = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM centres WHERE is_active = true) AS total_schools,
+        (SELECT COUNT(*) FROM users WHERE role = 'FACILITATOR' AND is_active = true) AS total_teachers,
+        (SELECT COUNT(*) FROM learners WHERE status = 'ACTIVE') AS total_learners,
+        (SELECT COUNT(*) FROM resources WHERE is_approved = true AND is_active = true) AS total_resources
+    `);
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 exports.getSummary = async (req, res) => {
   try {
     const { rows: [summary] } = await pool.query(`
@@ -49,11 +64,13 @@ exports.getSchoolSummary = async (req, res) => {
     const { rows } = await pool.query(
       `SELECT c.centre_id, c.centre_name, c.province_id, p.province_name,
               COUNT(DISTINCT l.learner_id) AS total_learners,
-              COUNT(DISTINCT co.course_id) FILTER (WHERE co.is_active = true) AS active_courses
+              COUNT(DISTINCT co.course_id) FILTER (WHERE co.is_active = true) AS active_courses,
+              COUNT(DISTINCT u.user_id) FILTER (WHERE u.role = 'FACILITATOR' AND u.is_active = true) AS total_teachers
        FROM centres c
        LEFT JOIN provinces p ON c.province_id = p.province_id
        LEFT JOIN learners l ON l.centre_id = c.centre_id
        LEFT JOIN courses co ON co.centre_id = c.centre_id
+       LEFT JOIN users u ON u.centre_id = c.centre_id AND u.role = 'FACILITATOR' AND u.is_active = true
        WHERE c.is_active = true
        GROUP BY c.centre_id, c.centre_name, c.province_id, p.province_name
        ORDER BY c.centre_name`

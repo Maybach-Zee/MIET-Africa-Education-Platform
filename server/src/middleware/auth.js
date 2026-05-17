@@ -11,6 +11,29 @@ const verifyToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded; // { id, email, role }
 
+    // Block users from inactive schools (except admins)
+if (decoded.role !== 'ADMIN') {
+  try {
+    const { rows: [user] } = await pool.query(
+      'SELECT centre_id FROM users WHERE user_id = $1',
+      [decoded.id]
+    );
+    if (user?.centre_id) {
+      const { rows: [centre] } = await pool.query(
+        'SELECT is_active FROM centres WHERE centre_id = $1',
+        [user.centre_id]
+      );
+      if (centre && !centre.is_active) {
+        return res.status(403).json({
+          message: 'Your school has been deactivated. Please contact the administrator.',
+        });
+      }
+    }
+  } catch (err) {
+    console.error('checkActiveCentre error:', err);
+  }
+}
+
     // Set PostgreSQL session variables for RLS
     await pool.query(
       `SET LOCAL app.user_id = '${decoded.id}';

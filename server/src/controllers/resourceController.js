@@ -65,7 +65,7 @@ exports.getMyResources = async (req, res) => {
       `SELECT r.*, u.full_name AS uploaded_by_name
        FROM resources r
        LEFT JOIN users u ON r.uploaded_by = u.user_id
-       WHERE r.centre_id = $1 AND r.is_active = true
+       WHERE r.centre_id = $1 AND r.is_active = true AND r.is_approved = true
        ORDER BY r.created_at DESC`,
       [centreId]
     );
