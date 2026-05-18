@@ -1,9 +1,19 @@
 const express = require('express');
 const { verifyToken, authorize } = require('../middleware/auth');
-const { getMonthlyReport, getQuarterlyReport, getSchoolReport, getSchoolQuarterlyReport } = require('../controllers/reportController');
+const {
+  getDonorImpact,
+  getLearnerSummary,
+  getMonthlyReport,
+  getQuarterlyReport,
+  getSchoolReport,
+  getSchoolQuarterlyReport
+} = require('../controllers/reportController');
+
 const router = express.Router();
 
 // Admin reports
+router.get('/impact', verifyToken, authorize('ADMIN'), getDonorImpact);
+router.get('/learner-summary', verifyToken, authorize('ADMIN'), getLearnerSummary);
 router.get('/monthly', verifyToken, authorize('ADMIN'), getMonthlyReport);
 router.get('/quarterly', verifyToken, authorize('ADMIN'), getQuarterlyReport);
 

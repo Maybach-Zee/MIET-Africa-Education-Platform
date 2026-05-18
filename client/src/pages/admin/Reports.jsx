@@ -9,6 +9,7 @@ const Reports = () => {
   const [learnerSummary, setLearnerSummary] = useState([]);
   const [schoolSummary, setSchoolSummary] = useState([]);
   const [courseStats, setCourseStats] = useState([]);
+  const [donations, setDonations] = useState([]);
 
   useEffect(() => {
     if (tab === 'overview') {
@@ -23,6 +24,9 @@ const Reports = () => {
       api.get('/dashboard/school-summary').then(res => setSchoolSummary(res.data)).catch(() => toast.error('Failed to load school summary'));
     } else if (tab === 'courses') {
       api.get('/dashboard/course-stats').then(res => setCourseStats(res.data)).catch(() => toast.error('Failed to load course stats'));
+    }
+    else if (tab === 'impact') {
+      api.get('/donations').then(res => setDonations(res.data)).catch(() => toast.error('Failed to load donations'));
     }
   }, [tab]);
 
@@ -69,77 +73,90 @@ const Reports = () => {
       )}
 
       {tab === 'impact' && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="flex justify-between mb-4">
-            <h2 className="text-lg font-semibold">Donor Impact Report</h2>
-            <button onClick={handlePrint} className="bg-indigo-600 text-white px-4 py-2 rounded">Export PDF</button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left">Year</th>
-                  <th className="px-6 py-3 text-left">Month</th>
-                  <th className="px-6 py-3 text-left">Province</th>
-                  <th className="px-6 py-3 text-left">Learners Trained</th>
-                  <th className="px-6 py-3 text-left">Pass Rate %</th>
-                  <th className="px-6 py-3 text-left">Certificates</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {impact.slice(0, 50).map((row, i) => (
-                  <tr key={i}>
-                    <td className="px-6 py-4">{row.year}</td>
-                    <td className="px-6 py-4">{row.month}</td>
-                    <td className="px-6 py-4">{row.province_name}</td>
-                    <td className="px-6 py-4">{row.learners_trained}</td>
-                    <td className="px-6 py-4">{row.pass_rate_percent}%</td>
-                    <td className="px-6 py-4">{row.certificates_issued}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+  <div className="bg-white shadow rounded-lg p-6">
+    <div className="flex justify-between mb-4">
+      <h2 className="text-lg font-semibold">Donor Impact – All Donations</h2>
+      <button onClick={handlePrint} className="bg-indigo-600 text-white px-4 py-2 rounded">Export PDF</button>
+    </div>
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left">Donor Name</th>
+            <th className="px-6 py-3 text-left">Email</th>
+            <th className="px-6 py-3 text-left">Amount</th>
+            <th className="px-6 py-3 text-left">Purpose</th>
+            <th className="px-6 py-3 text-left">School</th>
+            <th className="px-6 py-3 text-left">Status</th>
+            <th className="px-6 py-3 text-left">Date</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200">
+          {donations.map(d => (
+            <tr key={d.donation_id}>
+              <td className="px-6 py-4">{d.donor_name}</td>
+              <td className="px-6 py-4">{d.donor_email}</td>
+              <td className="px-6 py-4">R {d.amount}</td>
+              <td className="px-6 py-4">{d.purpose}</td>
+              <td className="px-6 py-4">{d.centre_name || 'MIET Africa'}</td>
+              <td className="px-6 py-4">
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                  d.payment_status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                }`}>
+                  {d.payment_status}
+                </span>
+              </td>
+              <td className="px-6 py-4">{d.donation_date}</td>
+            </tr>
+          ))}
+          {donations.length === 0 && (
+            <tr><td colSpan="7" className="text-center py-4 text-gray-500">No donations recorded yet.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
 
-      {tab === 'learners' && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="flex justify-between mb-4">
-            <h2 className="text-lg font-semibold">Learner Summary</h2>
-            <button onClick={handlePrint} className="bg-indigo-600 text-white px-4 py-2 rounded">Export PDF</button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left">Name</th>
-                  <th className="px-6 py-3 text-left">ID Number</th>
-                  <th className="px-6 py-3 text-left">Status</th>
-                  <th className="px-6 py-3 text-left">Enrolments</th>
-                  <th className="px-6 py-3 text-left">Avg Attendance</th>
-                  <th className="px-6 py-3 text-left">Certificates</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {learnerSummary.map(l => (
-                  <tr key={l.learner_id}>
-                    <td className="px-6 py-4">{l.first_name} {l.last_name}</td>
-                    <td className="px-6 py-4">{l.id_number}</td>
-                    <td className="px-6 py-4">{l.learner_status}</td>
-                    <td className="px-6 py-4">{l.total_enrolments}</td>
-                    <td className="px-6 py-4">{l.avg_attendance_percentage}%</td>
-                    <td className="px-6 py-4">{l.certificates_issued}</td>
-                  </tr>
-                ))}
-                {learnerSummary.length === 0 && (
-                  <tr><td colSpan="6" className="text-center py-4 text-gray-500">No learner data found.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+{tab === 'learners' && (
+  <div className="bg-white shadow rounded-lg p-6">
+    <div className="flex justify-between mb-4">
+      <h2 className="text-lg font-semibold">Learner Summary</h2>
+      <button onClick={handlePrint} className="bg-indigo-600 text-white px-4 py-2 rounded">Export PDF</button>
+    </div>
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left">Name</th>
+            <th className="px-6 py-3 text-left">ID Number</th>
+            <th className="px-6 py-3 text-left">School</th>
+            <th className="px-6 py-3 text-left">Status</th>
+            <th className="px-6 py-3 text-left">Enrolments</th>
+            <th className="px-6 py-3 text-left">Avg Attendance</th>
+            <th className="px-6 py-3 text-left">Certificates</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200">
+          {learnerSummary.map(l => (
+            <tr key={l.learner_id}>
+              <td className="px-6 py-4">{l.first_name} {l.last_name}</td>
+              <td className="px-6 py-4">{l.id_number}</td>
+              <td className="px-6 py-4">{l.centre_name || '–'}</td>
+              <td className="px-6 py-4">{l.learner_status}</td>
+              <td className="px-6 py-4">{l.total_enrolments}</td>
+              <td className="px-6 py-4">{l.avg_attendance_percentage}%</td>
+              <td className="px-6 py-4">{l.certificates_issued}</td>
+            </tr>
+          ))}
+          {learnerSummary.length === 0 && (
+            <tr><td colSpan="7" className="text-center py-4 text-gray-500">No learner data found.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
 
       {tab === 'schools' && (
         <div className="bg-white shadow rounded-lg p-6">

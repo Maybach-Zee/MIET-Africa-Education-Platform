@@ -1,50 +1,91 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Donations = () => {
   const [donations, setDonations] = useState([]);
-  const [form, setForm] = useState({ donor_name: '', donor_organisation: '', amount: '', purpose: '', payment_method: 'EFT' });
+  const [total, setTotal] = useState(0);
+  const [statusFilter, setStatusFilter] = useState('');
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
-  useEffect(() => { api.get('/donations').then(res => setDonations(res.data)); }, []);
+  const fetchDonations = () => {
+    api.get('/donations').then(res => {
+      setDonations(res.data);
+      const sum = res.data.reduce((acc, d) => acc + parseFloat(d.amount), 0);
+      setTotal(sum);
+    }).catch(() => toast.error('Failed to load donations'));
+  };
 
-  const handleChange = (e) => setForm({...form, [e.target.name]: e.target.value});
+  useEffect(() => { fetchDonations(); }, []);
 
-  const record = async (e) => {
-    e.preventDefault();
+  const handleProcess = async (id, status) => {
     try {
-      await api.post('/donations', form);
-      toast.success('Donation recorded');
-      const { data } = await api.get('/donations');
-      setDonations(data);
-    } catch (err) { toast.error('Failed'); }
+      await api.put(`/donations/${id}/process`, { payment_status: status });
+      toast.success('Donation status updated');
+      fetchDonations();
+    } catch (err) {
+      // Show the specific reason from the server if available
+      const message =
+        err.response?.data?.message ||
+        'Update failed. Please try again.';
+      toast.error(message);
+    }
   };
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Donations</h1>
-      <div className="bg-white p-4 rounded shadow mb-6">
-        <form onSubmit={record} className="grid grid-cols-2 gap-3">
-          <input name="donor_name" placeholder="Donor Name" value={form.donor_name} onChange={handleChange} className="border rounded px-3 py-2" required />
-          <input name="donor_organisation" placeholder="Organisation" value={form.donor_organisation} onChange={handleChange} className="border rounded px-3 py-2" />
-          <input name="amount" type="number" placeholder="Amount" value={form.amount} onChange={handleChange} className="border rounded px-3 py-2" required />
-          <input name="purpose" placeholder="Purpose" value={form.purpose} onChange={handleChange} className="border rounded px-3 py-2" required />
-          <select name="payment_method" value={form.payment_method} onChange={handleChange} className="border rounded px-3 py-2">
-            <option>EFT</option><option>CASH</option><option>CARD</option>
+
+      <div className="bg-white p-4 rounded shadow mb-4 flex justify-between items-center">
+        <div>
+          <span className="text-gray-600">Total Donations: </span>
+          <span className="text-2xl font-bold text-green-600">R {total.toFixed(2)}</span>
+        </div>
+        <div>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border rounded px-3 py-2">
+            <option value="">All Status</option>
+            <option value="PENDING">Pending</option>
+            <option value="PAID">Paid</option>
+            <option value="WAIVED">Waived</option>
+            <option value="REFUNDED">Refunded</option>
           </select>
-          <button type="submit" className="col-span-2 bg-indigo-600 text-white py-2 rounded">Record Donation</button>
-        </form>
+        </div>
       </div>
 
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
-          {donations.map(d => (
-            <li key={d.donation_id} className="px-6 py-4">
-              <p className="font-medium">{d.donor_name} ({d.donor_organisation})</p>
-              <p className="text-sm text-gray-500">R{d.amount} – {d.purpose} – {d.payment_method}</p>
-            </li>
-          ))}
-        </ul>
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Donor</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {donations
+              .filter(d => !statusFilter || d.payment_status === statusFilter)
+              .map(d => (
+                <tr key={d.donation_id}>
+                  <td className="px-6 py-4">{d.donor_name}</td>
+                  <td className="px-6 py-4">{d.donor_email}</td>
+                  <td className="px-6 py-4">R {d.amount}</td>
+                  <td className="px-6 py-4">{d.purpose}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      d.payment_status === 'PAID' ? 'bg-green-100 text-green-700' :
+                      d.payment_status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {d.payment_status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

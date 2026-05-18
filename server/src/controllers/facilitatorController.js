@@ -219,12 +219,18 @@ exports.getSessionLearners = async (req, res) => {
 
   exports.getSchool = async (req, res) => {
     try {
-      const user = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
+      const user = await pool.query(
+        'SELECT centre_id FROM users WHERE user_id = $1',
+        [req.user.id]
+      );
       if (!user.rows[0]?.centre_id) return res.json(null);
       const { rows: [centre] } = await pool.query(
-        'SELECT * FROM centres WHERE centre_id = $1',
+        `SELECT centre_id, centre_name, registration_status, is_active
+         FROM centres WHERE centre_id = $1`,
         [user.rows[0].centre_id]
       );
       res.json(centre);
-    } catch (err) { res.status(500).json({ message: err.message }); }
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
   };

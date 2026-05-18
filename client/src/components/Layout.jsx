@@ -38,21 +38,24 @@ const navigation = {
   ],
 
   DONOR: [
-    { name: 'Impact Dashboard', href: '/donor', icon: ChartBarIcon },
+    { name: 'Dashboard', href: '/donor', icon: ChartBarIcon },
     { name: 'Donations', href: '/donor/donations', icon: CurrencyDollarIcon },
-    { name: 'Public Impact', href: '/donor/impact', icon: HomeIcon },
   ],
 };
 
+const roleLabels = {
+  ADMIN: 'Admin',
+  MANAGER: 'Manager',
+  FACILITATOR: 'Facilitator',
+  DONOR: 'Donor Manager',
+};
+
 const Layout = () => {
-
   const { user, logout } = useAuth();
-
   const location = useLocation();
-
   const navigate = useNavigate();
-
   const role = user?.role || 'ADMIN';
+  const roleDisplay = roleLabels[role] || role;
 
   const menu = navigation[role] || [];
 
@@ -63,7 +66,6 @@ const Layout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f5f7fb]">
-
       {/* SIDEBAR */}
       <aside
         className="
@@ -77,29 +79,20 @@ const Layout = () => {
           overflow-hidden
         "
       >
-
         {/* Background glow */}
         <div className="absolute -top-24 -right-24 w-72 h-72 bg-white/10 rounded-full" />
         <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-white/5 rounded-full" />
 
         {/* TOP */}
         <div className="relative z-10 flex items-center justify-between px-6 py-6">
-
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              MIET Africa
-            </h1>
-
-            <p className="text-sm text-white/80 mt-1">
-              Education Platform
-            </p>
+            <h1 className="text-2xl font-bold tracking-tight">MIET Africa</h1>
+            <p className="text-sm text-white/80 mt-1">Education Platform</p>
           </div>
-
         </div>
 
         {/* USER CARD */}
         <div className="relative z-10 px-5">
-
           <div
             className="
               bg-white/10
@@ -109,15 +102,8 @@ const Layout = () => {
               p-4
             "
           >
-
-            <p className="text-sm text-white/70">
-              Logged in as
-            </p>
-
-            <h3 className="font-semibold mt-1">
-              {user?.full_name}
-            </h3>
-
+            <p className="text-sm text-white/70">Logged in as</p>
+            <h3 className="font-semibold mt-1">{user?.full_name}</h3>
             <span
               className="
                 inline-block
@@ -131,42 +117,23 @@ const Layout = () => {
                 text-white
               "
             >
-              {user?.role}
+              {roleDisplay}
             </span>
-
           </div>
-
         </div>
 
         {/* NAVIGATION */}
         <nav className="relative z-10 flex-1 px-4 py-6 overflow-y-auto">
-
           <div className="space-y-2">
-
             {menu.map((item) => {
-
               const Icon = item.icon;
-
-              const active =
-                location.pathname === item.href;
-
+              const active = location.pathname === item.href;
               return (
                 <Link
                   key={item.name}
                   to={item.href}
                   className={`
-                    group
-                    flex
-                    items-center
-                    gap-3
-                    rounded-2xl
-                    px-4
-                    py-3
-                    text-sm
-                    font-medium
-                    transition-all
-                    duration-200
-
+                    group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200
                     ${
                       active
                         ? 'bg-white text-[#6f6ad9] shadow-lg'
@@ -174,147 +141,76 @@ const Layout = () => {
                     }
                   `}
                 >
-
                   <Icon
-                    className={`
-                      h-5 w-5 transition-all
-
-                      ${
-                        active
-                          ? 'text-[#6f6ad9]'
-                          : 'text-white/80 group-hover:text-white'
-                      }
-                    `}
+                    className={`h-5 w-5 transition-all ${
+                      active ? 'text-[#6f6ad9]' : 'text-white/80 group-hover:text-white'
+                    }`}
                   />
-
                   {item.name}
-
                 </Link>
               );
             })}
-
           </div>
-
         </nav>
 
         {/* LOGOUT */}
         <div className="relative z-10 p-5">
-
           <button
             onClick={handleLogout}
             className="
-              w-full
-              flex
-              items-center
-              justify-center
-              gap-2
-              rounded-2xl
-              bg-white/10
-              border border-white/10
-              py-3
-              text-sm
-              font-medium
-              text-white
-              transition-all
-              hover:bg-white
-              hover:text-[#6f6ad9]
+              w-full flex items-center justify-center gap-2 rounded-2xl
+              bg-white/10 border border-white/10 py-3 text-sm font-medium text-white
+              transition-all hover:bg-white hover:text-[#6f6ad9]
             "
           >
-
             <ArrowLeftOnRectangleIcon className="h-5 w-5" />
-
             Logout
-
           </button>
-
         </div>
-
       </aside>
 
       {/* MAIN CONTENT */}
       <main className="flex-1 overflow-y-auto overscroll-none">
-
         {/* TOPBAR */}
         <div
           className="
-            sticky
-            top-0
-            z-20
-            bg-white/90
-            backdrop-blur-md
-            border-b
-            border-gray-100
+            sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-gray-100
           "
         >
-
           <div className="flex items-center justify-between px-6 py-5">
-
             <div>
-              <h2 className="text-2xl font-bold text-slate-800">
-                Welcome back
-              </h2>
-
+              <h2 className="text-2xl font-bold text-slate-800">Welcome back</h2>
               <p className="text-sm text-slate-500 mt-1">
                 Manage your MIET Africa platform activities
               </p>
             </div>
-
             <div
               className="
-                hidden md:flex
-                items-center
-                gap-3
-                rounded-2xl
-                border
-                border-[#e2e8f0]
-                bg-white
-                px-4
-                py-2
-                shadow-sm
+                hidden md:flex items-center gap-3 rounded-2xl border border-[#e2e8f0]
+                bg-white px-4 py-2 shadow-sm
               "
             >
-
               <div
                 className="
-                  flex
-                  h-10
-                  w-10
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-gradient-to-br
-                  from-[#8884d8]
-                  to-[#82ca9d]
-                  text-white
-                  font-bold
+                  flex h-10 w-10 items-center justify-center rounded-full
+                  bg-gradient-to-br from-[#8884d8] to-[#82ca9d] text-white font-bold
                 "
               >
                 {user?.full_name?.charAt(0)}
               </div>
-
               <div>
-                <p className="text-sm font-semibold text-slate-800">
-                  {user?.full_name}
-                </p>
-
-                <p className="text-xs text-slate-500">
-                  {user?.role}
-                </p>
+                <p className="text-sm font-semibold text-slate-800">{user?.full_name}</p>
+                <p className="text-xs text-slate-500">{roleDisplay}</p>
               </div>
-
             </div>
-
           </div>
-
         </div>
 
         {/* PAGE CONTENT */}
         <div className="p-6 lg:p-8">
           <Outlet />
         </div>
-
       </main>
-
     </div>
   );
 };

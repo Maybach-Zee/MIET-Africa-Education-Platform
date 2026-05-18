@@ -618,10 +618,6 @@ const Register = () => {
 
           <div className="reg-form-wrap">
 
-            <button className="back-home-btn-right" onClick={() => navigate('/')}>
-              <IconArrowLeft /> Back to Home
-            </button>
-
             <h2 className="rf-heading">
               Register Your School
             </h2>

@@ -100,40 +100,22 @@ const ManageSchools = () => {
                     {c.is_active ? 'Yes' : 'No'}
                   </span>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => toggleActive(c.centre_id)}
-                      className="text-blue-600 hover:underline text-sm"
-                    >
-                      {c.is_active ? 'Deactivate' : 'Activate'}
-                    </button>
-                    {c.registration_status !== 'APPROVED' && (
-                      <button
-                        onClick={() => updateRegistrationStatus(c.centre_id, 'APPROVED')}
-                        className="text-green-600 hover:underline text-sm"
-                      >
-                        Approve
-                      </button>
-                    )}
-                    {c.registration_status !== 'REJECTED' && (
-                      <button
-                        onClick={() => updateRegistrationStatus(c.centre_id, 'REJECTED')}
-                        className="text-red-600 hover:underline text-sm"
-                      >
-                        Reject
-                      </button>
-                    )}
-                    {c.registration_status !== 'PENDING' && (
-                      <button
-                        onClick={() => updateRegistrationStatus(c.centre_id, 'PENDING')}
-                        className="text-yellow-600 hover:underline text-sm"
-                      >
-                        Reset to Pending
-                      </button>
-                    )}
-                  </div>
-                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+  <div className="flex gap-1">
+    <button onClick={() => toggleActive(c.centre_id)} className="text-blue-600 hover:underline text-sm">
+      {c.is_active ? 'Deact' : 'Act'}
+    </button>
+    {c.registration_status !== 'APPROVED' && (
+      <button onClick={() => updateRegistrationStatus(c.centre_id, 'APPROVED')} className="text-green-600 hover:underline text-sm">Apprv</button>
+    )}
+    {c.registration_status !== 'REJECTED' && (
+      <button onClick={() => updateRegistrationStatus(c.centre_id, 'REJECTED')} className="text-red-600 hover:underline text-sm">Rej</button>
+    )}
+    {c.registration_status !== 'PENDING' && (
+      <button onClick={() => updateRegistrationStatus(c.centre_id, 'PENDING')} className="text-yellow-600 hover:underline text-sm">Pend</button>
+    )}
+  </div>
+</td>
               </tr>
             ))}
           </tbody>

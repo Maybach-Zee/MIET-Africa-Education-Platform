@@ -195,23 +195,32 @@ exports.remove = async (req, res) => {
     }
     const user = userResult.rows[0];
 
-    // If manager, cascade-delete all facilitators in their school first
+    // Prevent deleting yourself
+    if (id === req.user.id) {
+      return res.status(400).json({ message: 'You cannot delete your own account.' });
+    }
+
+    // Cascade logic based on role
     if (user.role === 'MANAGER' && user.centre_id) {
-      // Remove facilitator assignments for all facilitators in the school
+      // Remove facilitator assignments for all facilitators in this school
       await pool.query(
         `DELETE FROM facilitator_assignments WHERE user_id IN (
           SELECT user_id FROM users WHERE role = 'FACILITATOR' AND centre_id = $1
         )`,
         [user.centre_id]
       );
-      // Delete the facilitators themselves
-      await pool.query('DELETE FROM users WHERE role = \'FACILITATOR\' AND centre_id = $1', [user.centre_id]);
+      // Delete all facilitators in that school
+      await pool.query(
+        'DELETE FROM users WHERE role = \'FACILITATOR\' AND centre_id = $1',
+        [user.centre_id]
+      );
     } else if (user.role === 'FACILITATOR') {
-      // Remove facilitator assignments for this single facilitator
+      // Remove single facilitator assignments
       await pool.query('DELETE FROM facilitator_assignments WHERE user_id = $1', [id]);
     }
+    // For DONOR or ADMIN, no cascade needed (but foreign keys might still exist – handled below)
 
-    // Now delete the user
+    // Attempt to delete the user; if foreign key violation, catch it
     await pool.query('DELETE FROM users WHERE user_id = $1', [id]);
 
     await logAction({
@@ -220,14 +229,20 @@ exports.remove = async (req, res) => {
       action: 'DELETE',
       entityType: 'users',
       entityId: id,
-      description: 'User deleted',
+      description: `User ${user.email} deleted`,
       actionResult: 'SUCCESS'
     });
-    res.json({ message: 'Deleted' });
+
+    res.json({ message: 'User deleted successfully' });
   } catch (err) {
     console.error('Delete user error:', err);
+    // Foreign key violation – tell the admin which table is blocking
     if (err.code === '23503') {
-      return res.status(400).json({ message: 'Cannot delete user because they have associated records. Consider deactivating instead.' });
+      const match = err.detail?.match(/Key \(.*?\)=\[.*?\] is still referenced from table "(.*?)"\./);
+      const table = match ? match[1] : 'another table';
+      return res.status(400).json({
+        message: `Cannot delete this user because they have associated records in ${table}. Consider deactivating instead.`
+      });
     }
     res.status(500).json({ message: 'An error occurred while deleting the user.' });
   }

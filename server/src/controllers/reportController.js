@@ -1,5 +1,32 @@
 const pool = require('../config/db');
 
+// Admin: impact report (from v_donor_impact_metrics)
+exports.getDonorImpact = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM v_donor_impact_metrics ORDER BY year DESC, month DESC'
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Admin: learner summary (from v_learner_summary)
+exports.getLearnerSummary = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT l.*, p.province_name, c.centre_name
+       FROM v_learner_summary l
+       LEFT JOIN provinces p ON l.province_name = p.province_name
+       LEFT JOIN centres c ON l.centre_name = c.centre_name`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // Admin: monthly aggregated report
 exports.getMonthlyReport = async (req, res) => {
   try {

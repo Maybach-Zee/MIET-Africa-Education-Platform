@@ -493,10 +493,6 @@ const Login = () => {
         <div className="login-right">
           <div className="r-card">
 
-            <button className="back-home-btn-right" onClick={() => navigate('/')}>
-              <IconArrowLeft /> Back to Home
-            </button>
-
             <h2 className="r-heading">
               Welcome Back
             </h2>

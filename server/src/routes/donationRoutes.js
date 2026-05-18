@@ -5,6 +5,6 @@ const router = express.Router();
 
 router.get('/', verifyToken, authorize('ADMIN', 'MANAGER', 'DONOR'), getAll);
 router.post('/', verifyToken, authorize('ADMIN', 'MANAGER'), create);
-router.put('/:id/process', verifyToken, authorize('ADMIN'), processDonation);
+router.put('/:id/process', verifyToken, authorize('ADMIN', 'DONOR'), processDonation);
 
 module.exports = router;

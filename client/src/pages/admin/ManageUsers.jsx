@@ -38,14 +38,14 @@ const ManageUsers = () => {
   };
 
   const deleteUser = async (userId) => {
-    if (window.confirm('Delete this user? This will also remove all associated data.')) {
+    if (window.confirm('Delete this user? This action cannot be undone.')) {
       try {
         await api.delete(`/users/${userId}`);
         toast.success('User deleted');
         const { data } = await api.get('/users');
         setUsers(data);
       } catch (err) {
-        toast.error('Failed to delete user');
+        toast.error(err.response?.data?.message || 'Failed to delete user');
       }
     }
   };
@@ -61,7 +61,7 @@ const ManageUsers = () => {
           <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} className="border rounded px-3 py-2" required />
           <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} className="border rounded px-3 py-2" required />
           <select name="role" value={form.role} onChange={handleChange} className="border rounded px-3 py-2">
-            <option>ADMIN</option><option>MANAGER</option><option>FACILITATOR</option><option>DONOR</option>
+            <option>ADMIN</option><option>MANAGER</option><option>FACILITATOR</option><option>Donor Manager</option>
           </select>
           <button type="submit" className="md:col-span-2 bg-indigo-600 text-white py-2 rounded">Create User</button>
         </form>
@@ -84,7 +84,7 @@ const ManageUsers = () => {
               <tr key={u.user_id}>
                 <td className="px-6 py-4">{u.full_name}</td>
                 <td className="px-6 py-4">{u.email}</td>
-                <td className="px-6 py-4">{u.role}</td>
+                <td className="px-6 py-4">{u.role  === 'DONOR' ? 'Donor Manager' : u.role}</td>
                 <td className="px-6 py-4">{u.centre_name || '–'}</td>
                 <td className="px-6 py-4">{u.is_active ? 'Yes' : 'No'}</td>
                 <td className="px-6 py-4 flex gap-2">
