@@ -1,0 +1,69 @@
+name: CI — Backend & Frontend
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (Node.js)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./server
+
+      - name: Run tests
+        run: npm test
+        working-directory: ./server
+        env:
+          NODE_ENV: test
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+  frontend:
+    name: Frontend (React)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./client
+
+      - name: Build
+        run: npm run build
+        working-directory: ./client
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          JWT_EXPIRE: ${{ secrets.JWT_EXPIRE }}
+          JWT_REFRESH_EXPIRE: ${{ secrets.JWT_REFRESH_EXPIRE }}
+          PORT: ${{ secrets.PORT }}
+          UPLOAD_PATH: ${{ secrets.UPLOAD_PATH }}
+
+      - name: Run tests
+        run: npm test -- --watchAll=false
+        working-directory: ./client
