@@ -1,19 +1,19 @@
 const jwt = require('jsonwebtoken');
 
-// ─── jest.mock MUST come before any variable references ──────────────────────
-// Jest hoists jest.mock() to the top of the file at compile time.
-// So mockQuery cannot be defined before jest.mock() — instead we define it
-// inside the factory and expose it via a module-level variable after.
+// ─── Mock pg BEFORE anything loads ───────────────────────────────────────────
+// jest.mock is hoisted to the top by Babel/Jest, so we use a module-scoped
+// variable assigned inside the factory to avoid the hoisting trap.
 let mockQuery;
 
 jest.mock('pg', () => {
-  mockQuery = jest.fn((sql) => {
-    if (sql && sql.includes('SELECT centre_id'))
-      return Promise.resolve({ rows: [] });
-    if (sql && sql.includes('SELECT is_active'))
-      return Promise.resolve({ rows: [{ is_active: true }] });
-    return Promise.resolve({ rows: [] });
-  });
+  // mockQuery handles ALL query shapes the middleware sends:
+  //   1. 'SELECT centre_id FROM users WHERE user_id = $1'
+  //   2. 'SELECT is_active FROM centres WHERE centre_id = $1'
+  //   3. Template literal: `SET LOCAL app.user_id = '...'; SET LOCAL ...`
+  mockQuery = jest.fn().mockImplementation(() =>
+    Promise.resolve({ rows: [] })
+  );
+
   const mPool = { query: mockQuery, on: jest.fn() };
   return { Pool: jest.fn(() => mPool) };
 });
@@ -31,21 +31,22 @@ const mockRes = () => {
 
 // ─── verifyToken ──────────────────────────────────────────────────────────────
 describe('Auth Middleware — verifyToken', () => {
-  beforeEach(() => mockQuery && mockQuery.mockClear());
+  beforeEach(() => {
+    // Reset to default (always resolves) before each test
+    mockQuery.mockImplementation(() => Promise.resolve({ rows: [] }));
+  });
 
   it('is exported as a function', () => {
     expect(typeof verifyToken).toBe('function');
   });
 
-  it('calls next() with a valid token', async () => {
+  it('calls next() with a valid FACILITATOR token', async () => {
     const token = jwt.sign(
       { id: '00000000-0000-0000-0000-000000000001', role: 'FACILITATOR', email: 'test@miet.org' },
       SECRET
     );
-    const req  = { headers: { authorization: `Bearer ${token}` } };
     const next = jest.fn();
-
-    await verifyToken(req, mockRes(), next);
+    await verifyToken({ headers: { authorization: `Bearer ${token}` } }, mockRes(), next);
     expect(next).toHaveBeenCalled();
   });
 
@@ -63,21 +64,29 @@ describe('Auth Middleware — verifyToken', () => {
     expect(req.user.role).toBe('ADMIN');
   });
 
+  it('calls next() with a valid ADMIN token', async () => {
+    const token = jwt.sign(
+      { id: '00000000-0000-0000-0000-000000000001', role: 'ADMIN', email: 'admin@miet.org' },
+      SECRET
+    );
+    const next = jest.fn();
+    await verifyToken({ headers: { authorization: `Bearer ${token}` } }, mockRes(), next);
+    expect(next).toHaveBeenCalled();
+  });
+
   it('skips centre DB check for ADMIN users', async () => {
     const token = jwt.sign(
       { id: '00000000-0000-0000-0000-000000000001', role: 'ADMIN', email: 'admin@miet.org' },
       SECRET
     );
-    const req  = { headers: { authorization: `Bearer ${token}` } };
     const next = jest.fn();
 
-    await verifyToken(req, mockRes(), next);
+    await verifyToken({ headers: { authorization: `Bearer ${token}` } }, mockRes(), next);
 
     const centreCheckCalled = mockQuery.mock.calls.some(
-      ([sql]) => sql && sql.includes('SELECT centre_id')
+      ([sql]) => typeof sql === 'string' && sql.includes('SELECT centre_id')
     );
     expect(centreCheckCalled).toBe(false);
-    expect(next).toHaveBeenCalled();
   });
 
   it('returns 401 when no token provided', async () => {
@@ -101,10 +110,11 @@ describe('Auth Middleware — verifyToken', () => {
   });
 
   it('returns 403 when user belongs to a deactivated school', async () => {
+    // Override: user has a centre, and that centre is deactivated
     mockQuery.mockImplementation((sql) => {
-      if (sql && sql.includes('SELECT centre_id'))
+      if (typeof sql === 'string' && sql.includes('SELECT centre_id'))
         return Promise.resolve({ rows: [{ centre_id: 'ccc00000-0000-0000-0000-000000000001' }] });
-      if (sql && sql.includes('SELECT is_active'))
+      if (typeof sql === 'string' && sql.includes('SELECT is_active'))
         return Promise.resolve({ rows: [{ is_active: false }] });
       return Promise.resolve({ rows: [] });
     });
