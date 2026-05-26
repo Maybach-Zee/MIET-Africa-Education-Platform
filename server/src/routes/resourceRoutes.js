@@ -2,7 +2,8 @@
 const express = require('express');
 const { verifyToken, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
-const { getAll, getAllAdmin, create, update, approve, archive, remove, getSummary, getMyResources } = require('../controllers/resourceController');
+const { getAll, getAllAdmin, create, update, approve, archive, remove, getSummary, getMyResources, getFacilitatorResources } = require('../controllers/resourceController');
+
 const router = express.Router();
 
 router.get('/', getAll);
@@ -14,5 +15,7 @@ router.put('/:id/archive', verifyToken, authorize('ADMIN', 'MANAGER'), archive);
 router.get('/summary', verifyToken, authorize('ADMIN', 'MANAGER'), getSummary);
 router.delete('/:id', verifyToken, authorize('ADMIN', 'MANAGER'), remove);
 router.get('/mine', verifyToken, authorize('MANAGER'), getMyResources);
+router.get('/facilitator', verifyToken, authorize('FACILITATOR'), getFacilitatorResources);
+
 
 module.exports = router;

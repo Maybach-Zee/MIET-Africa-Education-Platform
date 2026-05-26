@@ -52,8 +52,10 @@ exports.getSummary = async (req, res) => {
 };
 
 // Resources belonging to the principal's school
+// resources belonging to the principal's school
 exports.getMyResources = async (req, res) => {
   try {
+    // 1. Get the principal's centre_id
     const manager = await pool.query(
       'SELECT centre_id FROM users WHERE user_id = $1',
       [req.user.id]
@@ -61,39 +63,35 @@ exports.getMyResources = async (req, res) => {
     if (!manager.rows[0]?.centre_id) return res.json([]);
 
     const centreId = manager.rows[0].centre_id;
+
+    // 2. Fetch resources where the uploader belongs to this centre
+    //    (no need for r.centre_id column)
     const { rows } = await pool.query(
       `SELECT r.*, u.full_name AS uploaded_by_name
        FROM resources r
-       LEFT JOIN users u ON r.uploaded_by = u.user_id
-       WHERE r.centre_id = $1 AND r.is_active = true AND r.is_approved = true
+       JOIN users u ON r.uploaded_by = u.user_id
+       WHERE u.centre_id = $1
+         AND r.is_active = true
        ORDER BY r.created_at DESC`,
       [centreId]
     );
+
     res.json(rows);
   } catch (err) {
+    console.error('getMyResources error:', err);
     res.status(500).json({ message: err.message });
   }
 };
 
 // Create a new resource (auto‑links centre for MANAGER)
 exports.create = async (req, res) => {
-  const { title, description, type, grade_start, grade_end, subject, language, tags } = req.body;
+  const { title, description, type, grade_start, grade_end, subject, language } = req.body;
   const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
-  let tagsArray = [];
-  if (tags) {
-    if (Array.isArray(tags)) tagsArray = tags;
-    else if (typeof tags === 'string') tagsArray = tags.split(',').map(t => t.trim()).filter(t => t.length > 0);
-  }
-
   try {
-    // Get user's centre_id (for managers it will be their school; for admins null)
-    const centreResult = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
-    const centreId = centreResult.rows[0]?.centre_id;
-
     const { rows: [resource] } = await pool.query(
-      `INSERT INTO resources (title, description, type, grade_start, grade_end, subject, language, tags, file_url, uploaded_by, centre_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11) RETURNING *`,
+      `INSERT INTO resources (title, description, type, grade_start, grade_end, subject, language, file_url, uploaded_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
       [
         title,
         description,
@@ -102,19 +100,54 @@ exports.create = async (req, res) => {
         grade_end ? parseInt(grade_end, 10) : null,
         subject,
         language,
-        JSON.stringify(tagsArray),
         fileUrl,
-        req.user.id,
-        centreId
+        req.user.id
       ]
     );
-    await logAction({
-      userId: req.user.id, userEmail: req.user.email, action: 'CREATE',
-      entityType: 'resources', entityId: resource.resource_id,
-      description: 'Resource created', actionResult: 'SUCCESS'
-    });
+
+    // audit logging (unchanged, but wrap in its own try/catch as earlier)
+    try {
+      await logAction({
+        userId: req.user.id,
+        userEmail: req.user.email,
+        action: 'CREATE',
+        entityType: 'resources',
+        entityId: resource.resource_id,
+        description: 'Resource created',
+        actionResult: 'SUCCESS'
+      });
+    } catch (auditErr) {
+      console.error('Audit log failed:', auditErr);
+    }
+
     res.status(201).json(resource);
   } catch (err) {
+    console.error('Create resource error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getFacilitatorResources = async (req, res) => {
+  try {
+    // Get facilitator's school
+    const user = await pool.query('SELECT centre_id FROM users WHERE user_id = $1', [req.user.id]);
+    if (!user.rows[0]?.centre_id) return res.json([]);
+    const centreId = user.rows[0].centre_id;
+
+    // Fetch approved & active resources for that school (via uploader)
+    const { rows } = await pool.query(
+      `SELECT r.*, u.full_name AS uploaded_by_name
+       FROM resources r
+       JOIN users u ON r.uploaded_by = u.user_id
+       WHERE u.centre_id = $1
+         AND r.is_active = true
+         AND r.is_approved = true
+       ORDER BY r.created_at DESC`,
+      [centreId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('getFacilitatorResources error:', err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -122,7 +155,7 @@ exports.create = async (req, res) => {
 // Update an existing resource
 exports.update = async (req, res) => {
   const { id } = req.params;
-  const { title, description, type, grade_start, grade_end, subject, language, tags } = req.body;
+  const { title, description, type, grade_start, grade_end, subject, language } = req.body;
   let fileUrl = null;
   if (req.file) fileUrl = `/uploads/${req.file.filename}`;
 
@@ -139,24 +172,20 @@ exports.update = async (req, res) => {
     const newLanguage = language !== undefined ? language : current.language;
     const newFileUrl = fileUrl || current.file_url;
 
-    let newTags = current.tags;
-    if (tags !== undefined) {
-      if (Array.isArray(tags)) newTags = tags;
-      else if (typeof tags === 'string') newTags = tags.split(',').map(t => t.trim()).filter(t => t.length > 0);
-    }
-
     const { rows: [resource] } = await pool.query(
       `UPDATE resources SET title=$1, description=$2, type=$3, grade_start=$4, grade_end=$5,
-       subject=$6, language=$7, tags=$8::jsonb, file_url=$9, updated_at=NOW()
-       WHERE resource_id=$10 RETURNING *`,
-      [newTitle, newDescription, newType, newGradeStart, newGradeEnd, newSubject, newLanguage, JSON.stringify(newTags), newFileUrl, id]
+       subject=$6, language=$7, file_url=$8, updated_at=NOW()
+       WHERE resource_id=$9 RETURNING *`,
+      [newTitle, newDescription, newType, newGradeStart, newGradeEnd, newSubject, newLanguage, newFileUrl, id]
     );
+
     await logAction({
       userId: req.user.id, userEmail: req.user.email, action: 'UPDATE',
       entityType: 'resources', entityId: id, description: 'Resource updated', actionResult: 'SUCCESS'
     });
     res.json(resource);
   } catch (err) {
+    console.error('Update resource error:', err);
     res.status(500).json({ message: err.message });
   }
 };

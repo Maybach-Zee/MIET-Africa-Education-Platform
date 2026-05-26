@@ -12,4 +12,9 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  test: {
+    globals: true,           // lets you use describe/it/expect without importing
+    environment: 'jsdom',    // simulates the browser DOM
+    setupFiles: './src/__tests__/setupTests.js',
+  },
 });

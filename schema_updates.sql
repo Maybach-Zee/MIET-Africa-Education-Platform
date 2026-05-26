@@ -44,3 +44,7 @@ CREATE TABLE IF NOT EXISTS event_registrations (
 );
 
 ALTER TABLE donations ADD COLUMN IF NOT EXISTS payment_status payment_status DEFAULT 'PENDING';
+
+ALTER TABLE resources
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  ADD COLUMN IF NOT EXISTS centre_id UUID REFERENCES centres(centre_id);

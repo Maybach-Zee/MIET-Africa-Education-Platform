@@ -22,6 +22,7 @@ const FacilitatorDashboard = () => {
   const [registrations, setRegistrations] = useState([]);
   const [learnerCount, setLearnerCount] = useState(0);
   const [courseCount, setCourseCount] = useState(0);
+  const [resources, setResources] = useState([]);
 
   // Attendance specific states
   const [selectedSession, setSelectedSession] = useState('');
@@ -50,6 +51,13 @@ const FacilitatorDashboard = () => {
     api.get('/facilitator/attendance').then(res => setAttendance(res.data)).catch(() => {});
     api.get('/events/facilitator').then(res => setEvents(res.data)).catch(() => {});
     api.get('/events/my-registrations').then(res => setRegistrations(res.data)).catch(() => {});
+    fetchResources(); // Fetch school resources
+  };
+
+  const fetchResources = () => {
+    api.get('/resources/facilitator')
+      .then(res => setResources(res.data))
+      .catch(() => {});
   };
 
   useEffect(() => {
@@ -69,7 +77,6 @@ const FacilitatorDashboard = () => {
     api.get(`/facilitator/sessions/${sessionId}/learners`)
       .then(res => {
         setSessionLearners(res.data);
-        // Check if all are present
         const allPresent = res.data.length > 0 && res.data.every(l => l.present);
         setAllSelected(allPresent);
       })
@@ -107,7 +114,6 @@ const FacilitatorDashboard = () => {
     try {
       await api.post(`/facilitator/sessions/${selectedSession}/attendance`, { records });
       toast.success('Attendance saved');
-      // Refresh the list to reflect saved changes
       fetchSessionLearners(selectedSession);
     } catch (err) {
       toast.error('Failed to save');
@@ -118,7 +124,6 @@ const FacilitatorDashboard = () => {
   const handleModuleChange = (e) => {
     const mod = e.target.value;
     setModuleTitle(mod);
-    // Auto-populate unit standard code
     setUnitStandard(moduleCodes[mod] || '');
   };
 
@@ -138,12 +143,10 @@ const FacilitatorDashboard = () => {
         assessment_date: assessmentDate
       });
       toast.success('Assessment recorded');
-      // Clear form
       setModuleTitle('');
       setUnitStandard('');
       setScore('');
       setMaxScore('100');
-      // Refresh recent assessments
       api.get('/facilitator/assessments').then(res => setAssessments(res.data));
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to record');
@@ -205,6 +208,7 @@ const FacilitatorDashboard = () => {
           { key: 'courses', label: 'My Courses' },
           { key: 'sessions', label: 'Sessions / Attendance' },
           { key: 'assessments', label: 'Assessments' },
+          { key: 'resources', label: 'Resources' },
           { key: 'events', label: 'Training Events' },
         ].map(t => (
           <button
@@ -434,6 +438,46 @@ const FacilitatorDashboard = () => {
               </table>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Resources Tab */}
+      {tab === 'resources' && (
+        <div className="bg-white p-6 rounded-xl shadow">
+          <h2 className="text-lg font-semibold mb-4">School Resources</h2>
+          {resources.length === 0 ? (
+            <p className="text-gray-500">No approved resources available yet.</p>
+          ) : (
+            <ul className="divide-y divide-gray-200">
+              {resources.map(r => (
+                <li key={r.resource_id} className="py-3 flex justify-between items-center">
+                  <div>
+                    <p className="font-medium">{r.title} ({r.type})</p>
+                    <p className="text-sm text-gray-500">
+                      {r.subject && `Subject: ${r.subject} | `}
+                      {r.grade_start && `Grades ${r.grade_start}-${r.grade_end} | `}
+                      Language: {r.language}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
+                      Approved
+                    </span>
+                    {r.file_url && (
+                      <a
+                        href={r.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-indigo-600 hover:underline text-sm"
+                      >
+                        Download / View
+                      </a>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

@@ -43,7 +43,12 @@ const PrincipalDashboard = () => {
   };
 
   const fetchResources = () => {
-    api.get('/resources/mine').then(res => setResources(res.data)).catch(() => {});
+    api.get('/resources/mine')
+      .then(res => setResources(res.data))
+      .catch(err => {
+        console.error('Failed to fetch resources', err);
+        // optional toast: toast.error('Failed to load resources');
+      });
   };
 
   const fetchEvents = () => {
@@ -105,19 +110,41 @@ const PrincipalDashboard = () => {
     formData.append('grade_end', resForm.grade_end);
     formData.append('subject', resForm.subject);
     formData.append('language', resForm.language);
-    formData.append('tags', resForm.tags);
     formData.append('file', file);
     try {
       setUploading(true);
       await api.post('/resources', formData);
       toast.success('Resource uploaded');
-      setResForm({ title: '', type: 'LESSON_PLAN', grade_start: '', grade_end: '', subject: '', language: 'English', tags: '' });
+      setResForm({ title: '', type: 'LESSON_PLAN', grade_start: '', grade_end: '', subject: '', language: 'English' });
       setFile(null);
       fetchResources();
     } catch (err) {
-      toast.error('Upload failed');
+      console.error('Upload error:', err);
+      toast.error(err.response?.data?.message || 'Upload failed');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleArchiveResource = async (id) => {
+    if (!window.confirm('Archive this resource?')) return;
+    try {
+      await api.put(`/resources/${id}/archive`);
+      toast.success('Archived');
+      fetchResources();
+    } catch (err) {
+      toast.error('Failed to archive');
+    }
+  };
+  
+  const handleDeleteResource = async (id) => {
+    if (!window.confirm('Permanently delete this resource?')) return;
+    try {
+      await api.delete(`/resources/${id}`);
+      toast.success('Deleted');
+      fetchResources();
+    } catch (err) {
+      toast.error('Failed to delete');
     }
   };
 
@@ -241,7 +268,6 @@ const PrincipalDashboard = () => {
               <option>isiXhosa</option>
               <option>Afrikaans</option>
             </select>
-            <input name="tags" placeholder="Tags (comma separated)" value={resForm.tags} onChange={handleResChange} className="border rounded px-3 py-2 col-span-2" />
             <input type="file" onChange={e => setFile(e.target.files[0])} className="col-span-2" required />
             <button type="submit" disabled={uploading} className="col-span-2 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
               {uploading ? 'Uploading...' : 'Upload Resource'}
@@ -249,23 +275,27 @@ const PrincipalDashboard = () => {
           </form>
         )}
         <ul className="divide-y divide-gray-200">
-          {resources.map(r => (
-            <li key={r.resource_id} className="py-3 flex justify-between items-center">
-              <div>
-                <p className="font-medium">{r.title} ({r.type})</p>
-                <p className="text-sm text-gray-500">
-                  {r.subject && `Subject: ${r.subject} | `}
-                  {r.grade_start && `Grades ${r.grade_start}-${r.grade_end} | `}
-                  Language: {r.language}
-                </p>
-              </div>
-              <span className={`px-2 py-1 text-xs rounded-full ${r.is_approved ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                {r.is_approved ? 'Approved' : 'Pending'}
-              </span>
-            </li>
-          ))}
-          {resources.length === 0 && <li className="py-4 text-center text-gray-500">No resources uploaded yet.</li>}
-        </ul>
+  {resources.map(r => (
+    <li key={r.resource_id} className="py-3 flex justify-between items-center">
+      <div>
+        <p className="font-medium">{r.title} ({r.type})</p>
+        <p className="text-sm text-gray-500">
+          {r.subject && `Subject: ${r.subject} | `}
+          {r.grade_start && `Grades ${r.grade_start}-${r.grade_end} | `}
+          Language: {r.language}
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className={`px-2 py-1 text-xs rounded-full ${r.is_approved ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+          {r.is_approved ? 'Approved' : 'Pending'}
+        </span>
+        <button onClick={() => handleArchiveResource(r.resource_id)} className="text-yellow-600 hover:underline text-sm">Archive</button>
+        <button onClick={() => handleDeleteResource(r.resource_id)} className="text-red-600 hover:underline text-sm">Delete</button>
+      </div>
+    </li>
+  ))}
+  {resources.length === 0 && <li className="py-4 text-center text-gray-500">No resources uploaded yet.</li>}
+</ul>
       </div>
 
       {/* Events Section */}

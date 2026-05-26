@@ -82,9 +82,27 @@ const ManageResources = () => {
                   <p className="text-xs text-gray-500">{r.type} | {r.is_approved ? 'Approved' : 'Pending'} {!r.is_active && '| Archived'}</p>
                 </div>
                 <div className="flex gap-1">
-  {!r.is_approved && <button onClick={() => handleApprove(r.resource_id)} className="text-green-600 hover:underline text-sm">Approve</button>}
-  <button onClick={() => handleArchive(r.resource_id)} className="text-yellow-600 hover:underline text-sm">Archive</button>
-  <button onClick={() => handleDelete(r.resource_id)} className="text-red-600 hover:underline text-sm">Delete</button>
+  {!r.is_approved && (
+    <button onClick={() => handleApprove(r.resource_id)} className="text-green-600 hover:underline text-sm">
+      Approve
+    </button>
+  )}
+  {r.file_url && (
+    <a
+      href={r.file_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 hover:underline text-sm"
+    >
+      Preview
+    </a>
+  )}
+  <button onClick={() => handleArchive(r.resource_id)} className="text-yellow-600 hover:underline text-sm">
+    Archive
+  </button>
+  <button onClick={() => handleDelete(r.resource_id)} className="text-red-600 hover:underline text-sm">
+    Delete
+  </button>
 </div>
               </li>
             ))}
