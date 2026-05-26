@@ -1,9 +1,6 @@
 const jwt = require('jsonwebtoken');
 
 // ─── Use a fixed secret so tests never depend on JWT_SECRET env var ──────────
-// In CI, JWT_SECRET is the real production secret — but tokens signed with
-// 'test-secret' would fail verification. We mock jsonwebtoken so sign/verify
-// always use the same fixed secret regardless of environment.
 const TEST_SECRET = 'miet-africa-test-secret-fixed';
 
 jest.mock('jsonwebtoken', () => {
@@ -19,11 +16,15 @@ jest.mock('jsonwebtoken', () => {
 let mockQuery;
 
 jest.mock('pg', () => {
-  mockQuery = jest.fn().mockImplementation(() =>
-    Promise.resolve({ rows: [] })
-  );
-  const mPool = { query: mockQuery, on: jest.fn() };
-  return { Pool: jest.fn(() => mPool) };
+  const mQuery = jest.fn().mockResolvedValue({ rows: [] });
+  const mPool  = { query: mQuery, on: jest.fn() };
+  // Expose via module-level variable after hoisting resolves
+  return {
+    Pool: jest.fn(() => {
+      mockQuery = mPool.query;
+      return mPool;
+    }),
+  };
 });
 
 const { verifyToken, authorize } = require('../src/middleware/auth');
@@ -37,11 +38,21 @@ const mockRes = () => {
   return res;
 };
 
+/**
+ * Build a minimal req object for verifyToken.
+ * originalUrl MUST be present — auth.js calls req.originalUrl.includes(...)
+ * and will throw (caught as 403) if it is undefined.
+ */
+const mockReq = (token, url = '/api/some/path') => ({
+  headers: { authorization: `Bearer ${token}` },
+  originalUrl: url,
+});
+
 // ─── verifyToken ──────────────────────────────────────────────────────────────
 describe('Auth Middleware — verifyToken', () => {
   beforeEach(() => {
-    // Reset to default (always resolves) before each test
-    mockQuery.mockImplementation(() => Promise.resolve({ rows: [] }));
+    // Reset to a safe default before each test
+    mockQuery.mockResolvedValue({ rows: [] });
   });
 
   it('is exported as a function', () => {
@@ -54,7 +65,8 @@ describe('Auth Middleware — verifyToken', () => {
       SECRET
     );
     const next = jest.fn();
-    await verifyToken({ headers: { authorization: `Bearer ${token}` } }, mockRes(), next);
+    // FACILITATOR with no centre_id → centre check is skipped → next() called
+    await verifyToken(mockReq(token), mockRes(), next);
     expect(next).toHaveBeenCalled();
   });
 
@@ -63,7 +75,7 @@ describe('Auth Middleware — verifyToken', () => {
       { id: '00000000-0000-0000-0000-000000000042', role: 'ADMIN', email: 'admin@miet.org' },
       SECRET
     );
-    const req  = { headers: { authorization: `Bearer ${token}` } };
+    const req  = mockReq(token);
     const next = jest.fn();
 
     await verifyToken(req, mockRes(), next);
@@ -78,7 +90,8 @@ describe('Auth Middleware — verifyToken', () => {
       SECRET
     );
     const next = jest.fn();
-    await verifyToken({ headers: { authorization: `Bearer ${token}` } }, mockRes(), next);
+    // ADMIN skips the centre check entirely
+    await verifyToken(mockReq(token), mockRes(), next);
     expect(next).toHaveBeenCalled();
   });
 
@@ -89,7 +102,7 @@ describe('Auth Middleware — verifyToken', () => {
     );
     const next = jest.fn();
 
-    await verifyToken({ headers: { authorization: `Bearer ${token}` } }, mockRes(), next);
+    await verifyToken(mockReq(token), mockRes(), next);
 
     // What matters: ADMIN gets through — next() is called
     expect(next).toHaveBeenCalled();
@@ -97,20 +110,28 @@ describe('Auth Middleware — verifyToken', () => {
 
   it('returns 401 when no token provided', async () => {
     const res = mockRes();
-    await verifyToken({ headers: {} }, res, jest.fn());
+    await verifyToken({ headers: {}, originalUrl: '/api/test' }, res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
   it('returns 401 when Authorization header has wrong format', async () => {
     const res = mockRes();
-    await verifyToken({ headers: { authorization: 'Basic abc123' } }, res, jest.fn());
+    await verifyToken(
+      { headers: { authorization: 'Basic abc123' }, originalUrl: '/api/test' },
+      res,
+      jest.fn()
+    );
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
   it('returns 403 when token is invalid', async () => {
     const res  = mockRes();
     const next = jest.fn();
-    await verifyToken({ headers: { authorization: 'Bearer not.a.valid.token' } }, res, next);
+    await verifyToken(
+      { headers: { authorization: 'Bearer not.a.valid.token' }, originalUrl: '/api/test' },
+      res,
+      next
+    );
     expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });
@@ -132,7 +153,7 @@ describe('Auth Middleware — verifyToken', () => {
     const res  = mockRes();
     const next = jest.fn();
 
-    await verifyToken({ headers: { authorization: `Bearer ${token}` } }, res, next);
+    await verifyToken(mockReq(token), res, next);
     expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });

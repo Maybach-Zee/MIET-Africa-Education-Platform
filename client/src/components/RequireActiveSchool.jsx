@@ -1,3 +1,5 @@
+// components/RequireActiveSchool.jsx
+
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import api from '../services/api';
@@ -8,7 +10,7 @@ import SchoolDeactivated from '../pages/auth/SchoolDeactivated';
 
 const RequireActiveSchool = () => {
   const { user } = useAuth();
-  const [status, setStatus] = useState('loading'); // 'approved', 'pending', 'rejected', 'deactivated'
+  const [status, setStatus] = useState('loading');
 
   useEffect(() => {
     if (!user) return;
@@ -24,24 +26,32 @@ const RequireActiveSchool = () => {
           centre = data;
         }
 
+        console.log('School status response:', centre);          // <-- ADD THIS
+
         if (!centre) {
-          // No school linked – treat as pending (should not happen normally)
+          console.log('No centre returned -> pending');
           setStatus('pending');
           return;
         }
 
-        if (centre.registration_status !== 'APPROVED') {
-          setStatus(centre.registration_status.toLowerCase());
-          return;
-        }
+        // 1. Check deactivated
         if (!centre.is_active) {
+          console.log('is_active is false -> deactivated');
           setStatus('deactivated');
           return;
         }
+
+        // 2. Then registration status
+        if (centre.registration_status !== 'APPROVED') {
+          console.log(`registration_status = ${centre.registration_status} -> ${centre.registration_status.toLowerCase()}`);
+          setStatus(centre.registration_status.toLowerCase());
+          return;
+        }
+
         setStatus('approved');
       } catch (err) {
-        // If endpoint fails, assume no school → pending
-        setStatus('pending');
+        console.error('Failed to fetch school status:', err);   // <-- ADD THIS
+        setStatus('pending'); // fallback
       }
     };
 
