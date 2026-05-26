@@ -1,26 +1,34 @@
 const jwt = require('jsonwebtoken');
 
+// ─── Use a fixed secret so tests never depend on JWT_SECRET env var ──────────
+// In CI, JWT_SECRET is the real production secret — but tokens signed with
+// 'test-secret' would fail verification. We mock jsonwebtoken so sign/verify
+// always use the same fixed secret regardless of environment.
+const TEST_SECRET = 'miet-africa-test-secret-fixed';
+
+jest.mock('jsonwebtoken', () => {
+  const real = jest.requireActual('jsonwebtoken');
+  return {
+    ...real,
+    verify: (token, _secret, ...args) => real.verify(token, TEST_SECRET, ...args),
+    sign:   (payload, _secret, ...args) => real.sign(payload, TEST_SECRET, ...args),
+  };
+});
+
 // ─── Mock pg BEFORE anything loads ───────────────────────────────────────────
-// jest.mock is hoisted to the top by Babel/Jest, so we use a module-scoped
-// variable assigned inside the factory to avoid the hoisting trap.
 let mockQuery;
 
 jest.mock('pg', () => {
-  // mockQuery handles ALL query shapes the middleware sends:
-  //   1. 'SELECT centre_id FROM users WHERE user_id = $1'
-  //   2. 'SELECT is_active FROM centres WHERE centre_id = $1'
-  //   3. Template literal: `SET LOCAL app.user_id = '...'; SET LOCAL ...`
   mockQuery = jest.fn().mockImplementation(() =>
     Promise.resolve({ rows: [] })
   );
-
   const mPool = { query: mockQuery, on: jest.fn() };
   return { Pool: jest.fn(() => mPool) };
 });
 
 const { verifyToken, authorize } = require('../src/middleware/auth');
 
-const SECRET = process.env.JWT_SECRET || 'test-secret';
+const SECRET = TEST_SECRET;
 
 const mockRes = () => {
   const res = {};
