@@ -1,11 +1,22 @@
+jest.mock('pg', () => {
+  const mPool = {
+    query: jest.fn().mockResolvedValue({ rows: [] }),
+    on: jest.fn(),
+    connect: jest.fn().mockResolvedValue({
+      query: jest.fn().mockResolvedValue({ rows: [] }),
+      release: jest.fn(),
+    }),
+  };
+  return { Pool: jest.fn(() => mPool) };
+});
+
 const request = require('supertest');
 const app = require('../src/app');
 
 describe('Server Health', () => {
-  it('GET / or any mounted route — server is responding', async () => {
-    // /api/auth exists and is mounted, so hitting an invalid sub-route gives 404 not a crash
-    const res = await request(app).get('/api/auth/nonexistent');
-    expect(res.statusCode).toBeLessThan(500); // server is up if it's not a 5xx
+  it('server is responding — known route returns non-5xx', async () => {
+    const res = await request(app).post('/api/auth/login').send({});
+    expect(res.statusCode).toBeLessThan(500);
   });
 
   it('GET /nonexistent — responds 404', async () => {

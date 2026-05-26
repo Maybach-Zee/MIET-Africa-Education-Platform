@@ -1,5 +1,17 @@
+jest.mock('pg', () => {
+  const mPool = {
+    query: jest.fn().mockResolvedValue({ rows: [] }),
+    on: jest.fn(),
+    connect: jest.fn().mockResolvedValue({
+      query: jest.fn().mockResolvedValue({ rows: [] }),
+      release: jest.fn(),
+    }),
+  };
+  return { Pool: jest.fn(() => mPool) };
+});
+
 const request = require('supertest');
-const app = require('../src/app'); // ✅ app.js, not server.js
+const app = require('../src/app');
 
 describe('Event Routes', () => {
   it('GET /api/events — returns 401 without token', async () => {
@@ -13,9 +25,7 @@ describe('Event Routes', () => {
   });
 
   it('POST /api/events — returns 401 without token', async () => {
-    const res = await request(app)
-      .post('/api/events')
-      .send({ title: 'Teacher Training', date: '2025-06-01' });
+    const res = await request(app).post('/api/events').send({ title: 'Training' });
     expect([401, 403]).toContain(res.statusCode);
   });
 });

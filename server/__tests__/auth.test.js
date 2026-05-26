@@ -1,5 +1,20 @@
+const jwt = require('jsonwebtoken');
+
+// ─── Mock pg BEFORE app loads ─────────────────────────────────────────────────
+jest.mock('pg', () => {
+  const mPool = {
+    query: jest.fn().mockResolvedValue({ rows: [] }),
+    on: jest.fn(),
+    connect: jest.fn().mockResolvedValue({
+      query: jest.fn().mockResolvedValue({ rows: [] }),
+      release: jest.fn(),
+    }),
+  };
+  return { Pool: jest.fn(() => mPool) };
+});
+
 const request = require('supertest');
-const app = require('../src/app'); // ✅ app.js, not server.js
+const app = require('../src/app');
 
 describe('Auth Routes — POST /api/auth/register', () => {
   it('returns 400 when body is empty', async () => {

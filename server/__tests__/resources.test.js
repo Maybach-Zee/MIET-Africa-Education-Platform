@@ -1,10 +1,21 @@
+jest.mock('pg', () => {
+  const mPool = {
+    query: jest.fn().mockResolvedValue({ rows: [] }),
+    on: jest.fn(),
+    connect: jest.fn().mockResolvedValue({
+      query: jest.fn().mockResolvedValue({ rows: [] }),
+      release: jest.fn(),
+    }),
+  };
+  return { Pool: jest.fn(() => mPool) };
+});
+
 const request = require('supertest');
 const app = require('../src/app');
 
 describe('Resource Routes', () => {
-  it('GET /api/resources — responds (public list or auth-protected)', async () => {
+  it('GET /api/resources — responds (public or auth-protected)', async () => {
     const res = await request(app).get('/api/resources');
-    // Some resource lists are public (200), others require auth (401/403)
     expect([200, 401, 403]).toContain(res.statusCode);
   });
 
@@ -13,10 +24,8 @@ describe('Resource Routes', () => {
     expect(res.headers['content-type']).toMatch(/json/);
   });
 
-  it('POST /api/resources — returns 401 without token (creating requires auth)', async () => {
-    const res = await request(app)
-      .post('/api/resources')
-      .send({ title: 'Test Resource' });
+  it('POST /api/resources — returns 401 without token', async () => {
+    const res = await request(app).post('/api/resources').send({ title: 'Test' });
     expect([401, 403]).toContain(res.statusCode);
   });
 

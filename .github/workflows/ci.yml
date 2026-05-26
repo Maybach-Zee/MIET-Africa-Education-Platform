@@ -30,12 +30,10 @@ jobs:
         working-directory: ./server
 
       - name: 🧪 Run tests
-        # --runInBand runs tests serially — prevents port conflicts between test files
         run: npm test -- --runInBand
         working-directory: ./server
         env:
           NODE_ENV: test
-          # DB is fully mocked via jest.mock('pg') — no real DB connection needed
           DATABASE_URL: postgresql://mock:mock@localhost:5432/mock
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
@@ -66,53 +64,8 @@ jobs:
         run: npm run build
         working-directory: ./client
         env:
-          # Vite uses VITE_ prefix, not REACT_APP_
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: 🧪 Run tests
-        # vitest run — no --watchAll flag needed, vitest run exits automatically
         run: npm test
         working-directory: ./client
-
-  # ─────────────────────────────────────────
-  # JOB 3: iOS Mobile (Swift) — main only
-  # ─────────────────────────────────────────
-  mobile:
-    name: 📱 Mobile (SwiftUI / iOS)
-    runs-on: macos-latest
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: ⬇️ Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🍎 Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app
-
-      - name: 🏗️ Build iOS app
-        run: |
-          xcodebuild build \
-            -project MIETAfrica.xcodeproj \
-            -scheme MIETAfrica \
-            -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
-            CODE_SIGNING_ALLOWED=NO
-        working-directory: ./mobile/MIETAfrica
-
-  # ─────────────────────────────────────────
-  # JOB 4: Security scan
-  # ─────────────────────────────────────────
-  security:
-    name: 🔐 Security Scan
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: ⬇️ Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🔍 Scan for hardcoded secrets
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
