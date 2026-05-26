@@ -2,12 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Landing from '../pages/Landing';
 
-const renderLanding = () =>
-  render(
-    <MemoryRouter>
-      <Landing />
-    </MemoryRouter>
-  );
+const renderLanding = () => render(<MemoryRouter><Landing /></MemoryRouter>);
 
 describe('Landing Page', () => {
   it('renders without crashing', () => {
@@ -17,14 +12,25 @@ describe('Landing Page', () => {
 
   it('displays MIET Africa branding', () => {
     renderLanding();
-    expect(document.body.textContent.toLowerCase()).toMatch(/miet|africa|education/i);
+    expect(document.body.textContent.toLowerCase()).toMatch(/miet|africa/i);
   });
 
-  it('has a call-to-action button or link', () => {
+  it('has at least one call-to-action button', () => {
     renderLanding();
-    const cta =
-      screen.queryByRole('link', { name: /login|sign in|get started|learn more|register/i }) ||
-      screen.queryByRole('button', { name: /login|sign in|get started|register/i });
-    expect(cta).toBeInTheDocument();
+    // From the DOM: multiple CTA buttons exist — use getAllByRole
+    const btns = screen.getAllByRole('button', { name: /register|sign in/i });
+    expect(btns.length).toBeGreaterThan(0);
+  });
+
+  it('shows navigation links', () => {
+    renderLanding();
+    // From the DOM: nav links for Programmes, Impact, How It Works, Platform
+    expect(screen.getByRole('link', { name: /programmes/i })).toBeInTheDocument();
+  });
+
+  it('shows impact statistics', () => {
+    renderLanding();
+    // From the DOM: "35+ Years of Impact", "9 SA Provinces" etc.
+    expect(document.body.textContent).toMatch(/35\+|500K\+|1 000\+/);
   });
 });

@@ -1,16 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import ProtectedRoute from '../components/ProtectedRoute';
 
-// We use vi.mock at the top — each test re-renders with different user state
+// Mock AuthContext inline — vi.mock is hoisted by Vitest
+vi.mock('../contexts/AuthContext', () => ({
+  useAuth: vi.fn(() => ({ user: null, loading: false })),
+}));
+
+import { useAuth } from '../contexts/AuthContext';
+
 const renderRoute = (user) => {
-  vi.resetModules();
-
-  // Inline mock before importing component
-  vi.mock('../contexts/AuthContext', () => ({
-    useAuth: () => ({ user, loading: false }),
-  }));
-
-  const ProtectedRoute = require('../components/ProtectedRoute').default;
+  useAuth.mockReturnValue({ user, loading: false });
 
   return render(
     <MemoryRouter initialEntries={['/dashboard']}>
@@ -37,7 +37,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('allows authenticated users — protected content is shown', () => {
-    renderRoute({ id: 1, name: 'Sipho', role: 'facilitator' });
+    renderRoute({ id: '1', name: 'Sipho', role: 'FACILITATOR' });
     expect(screen.getByText('Protected Content')).toBeInTheDocument();
   });
 });

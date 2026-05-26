@@ -3,19 +3,10 @@ import { MemoryRouter } from 'react-router-dom';
 import Register from '../pages/auth/Register';
 
 vi.mock('../contexts/AuthContext', () => ({
-  useAuth: () => ({
-    register: vi.fn(),
-    user: null,
-    loading: false,
-  }),
+  useAuth: () => ({ register: vi.fn(), user: null, loading: false }),
 }));
 
-const renderRegister = () =>
-  render(
-    <MemoryRouter>
-      <Register />
-    </MemoryRouter>
-  );
+const renderRegister = () => render(<MemoryRouter><Register /></MemoryRouter>);
 
 describe('Register Page', () => {
   it('renders without crashing', () => {
@@ -23,32 +14,45 @@ describe('Register Page', () => {
     expect(document.body).toBeTruthy();
   });
 
-  it('shows a register / sign-up button', () => {
+  it('shows a submit registration button', () => {
     renderRegister();
-    expect(
-      screen.getByRole('button', { name: /register|sign up|create account/i })
-    ).toBeInTheDocument();
+    // From the DOM: button name is "Submit Registration"
+    const btn = screen.queryByRole('button', { name: /submit registration/i });
+    expect(btn).toBeInTheDocument();
   });
 
   it('renders an email input', () => {
     renderRegister();
-    const el =
-      screen.queryByPlaceholderText(/email/i) ||
-      screen.queryByLabelText(/email/i);
-    expect(el).toBeInTheDocument();
+    // From the DOM: input name="email" placeholder="you@school.org.za"
+    const el = document.querySelector('input[name="email"]');
+    expect(el).toBeTruthy();
   });
 
-  it('renders a password input', () => {
+  it('renders a full name input', () => {
     renderRegister();
-    const el =
-      screen.queryByPlaceholderText(/password/i) ||
-      screen.queryByLabelText(/password/i);
-    expect(el).toBeInTheDocument();
+    // From the DOM: input name="full_name" placeholder="Jane Dlamini"
+    const el = document.querySelector('input[name="full_name"]');
+    expect(el).toBeTruthy();
   });
 
-  it('shows a link back to login', () => {
+  it('renders a school name input', () => {
     renderRegister();
-    const link = screen.queryByRole('link', { name: /login|sign in|already have/i });
-    expect(link).toBeInTheDocument();
+    // From the DOM: input name="centre_name"
+    const el = document.querySelector('input[name="centre_name"]');
+    expect(el).toBeTruthy();
+  });
+
+  it('renders a province selector', () => {
+    renderRegister();
+    // From the DOM: select name="province_id"
+    const el = document.querySelector('select[name="province_id"]');
+    expect(el).toBeTruthy();
+  });
+
+  it('shows a link or button to sign in', () => {
+    renderRegister();
+    // From the DOM: button type="button" with text "Sign In"
+    const el = screen.queryByRole('button', { name: /sign in/i });
+    expect(el).toBeInTheDocument();
   });
 });

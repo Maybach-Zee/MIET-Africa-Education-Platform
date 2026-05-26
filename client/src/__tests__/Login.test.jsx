@@ -3,19 +3,10 @@ import { MemoryRouter } from 'react-router-dom';
 import Login from '../pages/auth/Login';
 
 vi.mock('../contexts/AuthContext', () => ({
-  useAuth: () => ({
-    login: vi.fn(),
-    user: null,
-    loading: false,
-  }),
+  useAuth: () => ({ login: vi.fn(), user: null, loading: false }),
 }));
 
-const renderLogin = () =>
-  render(
-    <MemoryRouter>
-      <Login />
-    </MemoryRouter>
-  );
+const renderLogin = () => render(<MemoryRouter><Login /></MemoryRouter>);
 
 describe('Login Page', () => {
   it('renders without crashing', () => {
@@ -25,41 +16,34 @@ describe('Login Page', () => {
 
   it('shows a login / sign-in button', () => {
     renderLogin();
-    expect(
-      screen.getByRole('button', { name: /login|sign in/i })
-    ).toBeInTheDocument();
+    // From the DOM: button says "Sign In" or similar
+    const btn = screen.queryByRole('button', { name: /sign in|login/i });
+    expect(btn).toBeInTheDocument();
   });
 
   it('renders an email input', () => {
     renderLogin();
-    const el =
-      screen.queryByPlaceholderText(/email/i) ||
-      screen.queryByLabelText(/email/i);
-    expect(el).toBeInTheDocument();
+    // From the DOM: input type="email" or name="email"
+    const el = document.querySelector('input[type="email"], input[name="email"]');
+    expect(el).toBeTruthy();
   });
 
   it('renders a password input', () => {
     renderLogin();
-    const el =
-      screen.queryByPlaceholderText(/password/i) ||
-      screen.queryByLabelText(/password/i);
-    expect(el).toBeInTheDocument();
+    const el = document.querySelector('input[type="password"], input[name="password"]');
+    expect(el).toBeTruthy();
   });
 
   it('allows typing into the email field', () => {
     renderLogin();
-    const el =
-      screen.queryByPlaceholderText(/email/i) ||
-      screen.queryByLabelText(/email/i);
+    const el = document.querySelector('input[type="email"], input[name="email"]');
     fireEvent.change(el, { target: { value: 'teacher@miet.org' } });
     expect(el.value).toBe('teacher@miet.org');
   });
 
   it('allows typing into the password field', () => {
     renderLogin();
-    const el =
-      screen.queryByPlaceholderText(/password/i) ||
-      screen.queryByLabelText(/password/i);
+    const el = document.querySelector('input[type="password"], input[name="password"]');
     fireEvent.change(el, { target: { value: 'secret123' } });
     expect(el.value).toBe('secret123');
   });
