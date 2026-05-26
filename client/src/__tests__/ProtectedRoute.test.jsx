@@ -1,18 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import ProtectedRoute from '../components/ProtectedRoute';
 
-// Mock AuthContext inline — vi.mock is hoisted by Vitest
+// ─── Control what useAuth returns per test ────────────────────────────────────
+// We define the mock return value BEFORE the module loads by using a
+// module-level variable that the factory closes over.
+let mockUser = null;
+
 vi.mock('../contexts/AuthContext', () => ({
-  useAuth: vi.fn(() => ({ user: null, loading: false })),
+  useAuth: () => ({ user: mockUser, loading: false }),
 }));
 
-import { useAuth } from '../contexts/AuthContext';
+import ProtectedRoute from '../components/ProtectedRoute';
 
-const renderRoute = (user) => {
-  useAuth.mockReturnValue({ user, loading: false });
-
-  return render(
+const renderRoute = () =>
+  render(
     <MemoryRouter initialEntries={['/dashboard']}>
       <Routes>
         <Route
@@ -23,21 +24,27 @@ const renderRoute = (user) => {
             </ProtectedRoute>
           }
         />
-        <Route path="/login" element={<div>Login Page</div>} />
-        <Route path="/unauthorized" element={<div>Unauthorized</div>} />
+        <Route path="/login"         element={<div>Login Page</div>} />
+        <Route path="/unauthorized"  element={<div>Unauthorized</div>} />
+        <Route path="*"              element={<div>Not Found</div>} />
       </Routes>
     </MemoryRouter>
   );
-};
 
 describe('ProtectedRoute', () => {
+  beforeEach(() => {
+    mockUser = null; // reset to unauthenticated before each test
+  });
+
   it('blocks unauthenticated users — protected content is not shown', () => {
-    renderRoute(null);
+    mockUser = null;
+    renderRoute();
     expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
   });
 
   it('allows authenticated users — protected content is shown', () => {
-    renderRoute({ id: '1', name: 'Sipho', role: 'FACILITATOR' });
+    mockUser = { id: '1', name: 'Sipho', role: 'FACILITATOR' };
+    renderRoute();
     expect(screen.getByText('Protected Content')).toBeInTheDocument();
   });
 });
